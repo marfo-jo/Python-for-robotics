@@ -111,6 +111,16 @@ async function checkUI() {
     const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
     log(Boolean(ready(doc)) && !bad, `UI ${label}${bad ? " :: " + bad : ""}`);
   }
+  const cur = await json("../content/curriculum.json");
+  for (const track of cur.tracks) {
+    for (const page of track.pages.filter((p) => p.status !== "planned")) {
+      const doc = await visit(`#/t/${track.id}/${page.id}`, (d) => d.querySelector(".lesson-body") && d.querySelector(".lesson-body").children.length);
+      const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
+      const brokenImg = [...doc.querySelectorAll(".lesson-body img")].filter((i) => !i.complete || i.naturalWidth === 0).length;
+      log(!bad && !brokenImg && doc.querySelector(".lesson-body")?.children.length > 0,
+        `UI track ${page.id} renders${bad ? " :: " + bad : ""}${brokenImg ? ` :: ${brokenImg} broken images` : ""}`);
+    }
+  }
   localStorage.clear();
   log(errors.length === 0, `UI no uncaught errors ${errors.join(" ; ")}`);
   frame.remove();
