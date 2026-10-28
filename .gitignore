@@ -1,0 +1,14 @@
+# Secrets: never commit
+config.local.json
+
+# Private answer key (separate private repo cloned here)
+verification/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
