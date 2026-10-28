@@ -1,0 +1,143 @@
+{
+  "id": "m00.l07",
+  "title": "0.7 Tuples and unpacking",
+  "minutes": 75,
+  "objectives": [
+    "Create tuples (including the one-item tuple) and index, slice, and measure them like lists",
+    "Return several values from a function as a tuple, such as a (lat, lon) pair",
+    "Unpack tuples in assignments and in for loops, and swap two values in one line",
+    "Explain immutability and why a fixed record you can't accidentally modify is safer",
+    "Choose a tuple for a fixed-size record like (time, lat, lon) and a list for a growable collection"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: the (latitude, longitude) pair your ROS 2 GPS driver extracts from each $GPGGA fix, and the lat/lon versus x/y ordering that trips up every mapping pipeline"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "Tuple basics: make, index, unpack",
+      "file": "examples/ex1.py",
+      "expectedOutput": "tuple\n3\n123519 48.1173\n11.5167\n(48.1173, 11.5167)\n48.1173\n11.5167\n(48.1173, 11.5167)\ntuple int"
+    },
+    {
+      "id": "ex2",
+      "title": "Return a (lat, lon) pair, and swap in one line",
+      "file": "examples/ex2.py",
+      "expectedOutput": "tuple 2\n42.33539 -71.0928\n42.33539 -71.0928"
+    },
+    {
+      "id": "ex3",
+      "title": "A track: a list of (time, lat, lon) records",
+      "file": "examples/ex3.py",
+      "expectedOutput": "4 records\n152305.00 42.33539 -71.0928\n152306.00 42.3354 -71.09282\n152307.00 42.33542 -71.09284\n152308.00 42.33544 -71.09286\nnorthernmost: 152308.00 42.33544\nlast fix is record 3 at 152308.00\n('152305.00', 42.33539, -71.09279)"
+    },
+    {
+      "id": "ex4",
+      "title": "Why immutability helps: a home waypoint nothing can corrupt",
+      "file": "examples/ex4.py",
+      "expectedOutput": "target: [42.3382, -71.0928]\nhome:   [42.3382, -71.0928]\ntarget: (42.3382, -71.0928)\nhome:   (42.3372, -71.0928)\n[9, 3, 7, 8] ('152305.00', 42.33539, -71.0928)"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "You try to correct the latitude in a fix record. What happens?",
+      "code": "fix = (\"123519\", 48.1173, 11.5167)\nfix[1] = 0.0\nprint(fix)",
+      "choices": [
+        "('123519', 0.0, 11.5167)",
+        "('123519', 48.1173, 11.5167)",
+        "TypeError",
+        "IndexError"
+      ],
+      "answer": 2,
+      "why": "Tuples are immutable, like strings: you can't assign to an item. Python raises TypeError: 'tuple' object does not support item assignment, and print never runs. To 'change' a record, build a new tuple: fix = (fix[0], 0.0, fix[2]). Index 1 exists, so it isn't an IndexError."
+    },
+    {
+      "id": "p2",
+      "question": "You meant to make a one-item tuple holding a satellite count. What does this print?",
+      "code": "sats = (8)\nprint(type(sats).__name__, sats * 2)",
+      "choices": [
+        "tuple (8, 8)",
+        "int 16",
+        "tuple 16",
+        "int 88"
+      ],
+      "answer": 1,
+      "why": "Parentheses alone don't make a tuple; the COMMA does. (8) is just the number 8 inside grouping parentheses, the same as in (2 + 3) * 4. So sats is an int and sats * 2 is 16. A one-item tuple needs a trailing comma: (8,). Then (8,) * 2 would be (8, 8)."
+    },
+    {
+      "id": "p3",
+      "question": "lat and lon arrived in the wrong order, so you swap them. What does this print?",
+      "code": "lat, lon = -71.09, 42.33\nlat, lon = lon, lat\nprint(lat, lon)",
+      "choices": [
+        "42.33 -71.09",
+        "-71.09 42.33",
+        "42.33 42.33",
+        "-71.09 -71.09"
+      ],
+      "answer": 0,
+      "why": "Python evaluates the WHOLE right side first, packing it into the tuple (42.33, -71.09), and only then unpacks it into lat and lon. So nothing is overwritten too early. '42.33 42.33' is what you'd get if you swapped with two separate lines (lat = lon, then lon = lat), because the first line destroys the old lat before the second can use it."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: unpacking in a loop, and a one-line swap",
+      "props": {
+        "code": "fixes = [(\"152305.00\", 42.33539, -71.0928), (\"152306.00\", 42.3354, -71.09282)]\nfor time, lat, lon in fixes:\n    print(time, lat)\nlat, lon = -71.0928, 42.33539\nlat, lon = lon, lat\nprint(lat, lon)"
+      },
+      "notice": "On each loop pass, all three names (time, lat, lon) change together: one record unpacks into three slots. On the swap line, lat and lon both change in a SINGLE step, because Python built the right-hand tuple before assigning anything.",
+      "predictFirst": {
+        "question": "Before you trace: lat, lon = -71.0928, 42.33539 puts the values in the wrong order. After lat, lon = lon, lat runs, what are lat and lon? Does the new lat clobber the old one before lon gets its value?",
+        "reveal": "lat is 42.33539 and lon is -71.0928. Python evaluates the right side first and packs it into the tuple (42.33539, -71.0928), then unpacks. Nothing gets clobbered, so no temporary variable is needed."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "tracer",
+      "title": "Trace: a record you can't corrupt",
+      "props": {
+        "code": "home = (42.3372, -71.0928)\nlat, lon = home\nmoved = (lat + 0.001, lon)\nprint(home)\nprint(moved)\nhome[0] = 0.0",
+        "expectError": true
+      },
+      "notice": "moved is a brand-new tuple; home never changes. The last line tries to edit home in place and Python refuses with TypeError. That refusal is the point: a waypoint stored as a tuple can't be changed by accident through some other name."
+    }
+  ],
+  "challenge": {
+    "task": "Write fix_record(sentence), which returns a (utc_time, lat, lon) tuple from a GGA sentence (any talker; signed decimal degrees via the provided to_degrees) or None for non-GGA, cut-off, or empty-position input, and bounding_box(records), which returns ((min_lat, min_lon), (max_lat, max_lon)) for a list of records, or None for an empty list.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "lat/lon swapped when unpacking a tuple",
+    "report": "Field test, Centennial Common: \"The robot is parked in the middle of the fenced test area, but inside_fence() reports False every second, so the mission planner refuses to start. position() prints sensible numbers.\" Find the bug and fix it. position() must keep returning (lat, lon)."
+  },
+  "explainBack": {
+    "prompt": "In your own words: what does lat, lon = position(sentence) actually do, step by step? Why did writing lon, lat = position(sentence) put the robot 'outside' the fence without any error? And why is a tuple a better container than a list for a single (time, lat, lon) fix?",
+    "rubric": [
+      "Explains that unpacking assigns the tuple's items to the names on the left by POSITION, first to first, second to second",
+      "Explains that swapped names give no error because both values are floats; the meaning (which is latitude) only lives in the order, so lat got -71 and failed the range check",
+      "Explains that a tuple is immutable and fixed-size, so a record can't be accidentally changed or grown, while a list is meant for a growable collection"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "fix_record is your parse_gga from lesson 0.6 with a different output: which fields hold latitude and its hemisphere, and longitude and its hemisphere? What must you check before calling to_degrees? For bounding_box: what's a safe starting value for a running minimum, if 0 might not be in the data at all?",
+      "fix_record: strip and split; return None unless it's GGA with at least 15 fields and non-empty lat (field 2) and lon (field 4). Then return a TUPLE of the time text, to_degrees(field 2, field 3), and to_degrees(field 4, field 5), in that order. bounding_box: return None for an empty list; otherwise unpack the FIRST record to start all four running values, then loop with for time, lat, lon in records and update each min and max.",
+      "fix_record(sentence): fields = split(strip(sentence), ','); if characters 3 to 6 of fields[0] aren't 'GGA' or there are fewer than 15 fields: return None; if fields[2] or fields[4] is empty: return None; return (fields[1], to_degrees(fields[2], fields[3]), to_degrees(fields[4], fields[5])). bounding_box(records): if records is empty: return None; time, min_lat, min_lon = records[0]; max_lat, max_lon = min_lat, min_lon; for each time, lat, lon in records: update min_lat, max_lat, min_lon, max_lon; return ((min_lat, min_lon), (max_lat, max_lon))."
+    ],
+    "bug": [
+      "Print position(parked). Which number is the latitude (about 42) and which is the longitude (about -71)? Now look at the names on the LEFT of the unpacking line in inside_fence.",
+      "Unpacking assigns by position: the first item goes to the first name. position() returns latitude first, so the line must be lat, lon = position(sentence). As written, lat gets -71.09, which is never between 42.3350 and 42.3360."
+    ]
+  }
+}

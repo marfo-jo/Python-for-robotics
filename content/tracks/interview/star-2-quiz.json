@@ -1,0 +1,87 @@
+{
+  "title": "STAR 2 check: process-improvement stories",
+  "items": [
+    {
+      "id": "q1",
+      "q": "In a story about building a troubleshooting checklist, what most makes you sound like an engineer?",
+      "choices": [
+        "Saying the checklist was very long",
+        "Explaining how you ordered the steps and the expected reading for each check",
+        "Mentioning that you laminated it",
+        "Saying your manager liked it"
+      ],
+      "answer": 1,
+      "why": "Ordering logic (quickest, most likely, or safest check first; splitting the system) and pass/fail values are the same design decisions as in a test procedure. That's the engineering content."
+    },
+    {
+      "id": "q2",
+      "q": "Which Task statement is best?",
+      "choices": [
+        "\"I had to do stuff with the checklist.\"",
+        "\"The plant needed better documentation.\"",
+        "\"I decided to make the fix repeatable, so the night shift could clear the fault without calling me in.\"",
+        "\"My job was maintenance.\""
+      ],
+      "answer": 2,
+      "why": "It states your responsibility, that you took the initiative, and what success looks like. The others are either vague or about the company rather than you."
+    },
+    {
+      "id": "q3",
+      "q": "You wrote one section of a team-written procedure. How should you tell it?",
+      "choices": [
+        "Say you wrote the whole procedure",
+        "Say \"I wrote the section on the conveyor faults\" and describe that section in depth",
+        "Don't use this story",
+        "Say \"we\" throughout"
+      ],
+      "answer": 1,
+      "why": "A precise, honest scope is still a strong story, and it holds up under follow-up questions. Overclaiming is the fastest way to lose credibility."
+    },
+    {
+      "id": "q4",
+      "q": "Which Result is strongest for this story?",
+      "choices": [
+        "\"The checklist was finished and posted on the cabinet.\"",
+        "\"Callouts for that fault dropped from roughly weekly to about once a month, and the night shift used it on their own.\"",
+        "\"Everyone said it was great.\"",
+        "\"It was very helpful.\""
+      ],
+      "answer": 1,
+      "why": "It has an honest, roughly quantified change and evidence of adoption. Finishing a document isn't a result; what changed because people used it is."
+    },
+    {
+      "id": "q5",
+      "q": "How does a troubleshooting checklist relate to a pytest suite?",
+      "choices": [
+        "They are unrelated",
+        "Both are ordered checks with expected values and pass/fail outcomes; pytest runs its checks automatically on every change",
+        "pytest only checks formatting",
+        "A checklist is only for hardware, so the skills don't transfer"
+      ],
+      "answer": 1,
+      "why": "Expected value, actual value, pass or fail, then what to do on failure: same structure. Saying this out loud in an interview is a strong bridge from maintenance to test engineering."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Tell me about a time you created a process or a checklist that other people used.",
+      "rubric": [
+        "Specific motivating problem, with the before state and what it cost",
+        "Explains how the checklist was built: sources of information, the logic behind the order of steps, and expected values or pass/fail criteria",
+        "Tested or reviewed it with someone else and revised it based on what happened",
+        "Concrete, honest result: repair time, repeat faults, callouts, or adoption",
+        "Clear personal role, and a bridge to test procedures, documentation, or robotics debugging"
+      ]
+    },
+    {
+      "q": "Why would your maintenance background make you good at test and validation work?",
+      "rubric": [
+        "Names transferable skills concretely: systematic diagnosis, measurement, documenting procedures, reliability thinking",
+        "Draws the parallel between troubleshooting checklists or PM tasks and test procedures with pass/fail criteria",
+        "Backs the claim with a short real example rather than general statements",
+        "Mentions current technical work that shows the bridge (for example sensor logging, pytest, or the IMU and motor test rig projects), without overclaiming",
+        "Confident and concise (under about 90 seconds), with no apologizing for the non-traditional background"
+      ]
+    }
+  ]
+}

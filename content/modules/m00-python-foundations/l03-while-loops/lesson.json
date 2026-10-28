@@ -1,0 +1,76 @@
+{
+  "id": "m00.l03",
+  "title": "0.3 while loops",
+  "minutes": 75,
+  "objectives": [
+    "Write while loops that are guaranteed to end: a condition, a progress step that changes it, and a limit",
+    "Spot and fix infinite loops (missing increment, a condition that can never become False) and out-of-range reads",
+    "Use counters, += and break to build retry-until-valid and wait-until-settled loops with timeouts",
+    "Read NMEA lines one at a time until a valid GGA fix arrives, and give up cleanly after max_tries"
+  ],
+  "skills": {"python": 3, "softeng": 1},
+  "whereYouSawThis": {"course": "EECE5554 Robot Sensing and Navigation", "topic": "GPS lab: the driver's read loop that keeps reading serial lines until a valid GGA fix arrives (also ME5245 Mechatronics: sampling loops, settling time, and watchdog timers)"},
+  "examples": [
+    {"id": "ex1", "title": "Countdowns, counters, and a loop that runs zero times", "file": "examples/ex1.py",
+     "expectedOutput": "T minus 3\nT minus 2\nT minus 1\nmotors armed, countdown = 0\ncount after the loop: 4\nloop skipped, volts = 12.4"},
+    {"id": "ex2", "title": "An infinite loop, caught and fixed", "file": "examples/ex2.py",
+     "expectedOutput": "watchdog: still stuck at i = 0\nbuggy loop gave up after 11 scans\nsettled at index 3 value 0.6"},
+    {"id": "ex3", "title": "Retry until a valid fix arrives", "file": "examples/ex3.py",
+     "expectedOutput": "try 1 - not GGA, retry\ntry 2 - no fix yet, retry\ntry 3 - not GGA, retry\nfix after 4 tries: $GPGGA,142208.00,4220.1155,N,0"},
+    {"id": "ex4", "title": "How many scans until the wheel stops?", "file": "examples/ex4.py",
+     "expectedOutput": "7 scans = 70 ms\nfinal speed: 33.6 rpm\nTIMEOUT after 5 scans, still at 93.3 rpm"}
+  ],
+  "predict": [
+    {"id": "p1", "question": "What does this print?",
+     "code": "count = 0\nwhile count < 3:\n    count += 1\n    print(count)",
+     "choices": ["0\n1\n2", "1\n2\n3", "1\n2\n3\n4", "3"], "answer": 1,
+     "why": "The increment happens BEFORE the print, so the first value printed is 1. When count reaches 3, the condition 3 < 3 is False and the loop stops, so 4 is never printed. Always ask: what's the value at the first print, and what's the last value that still passes the condition?"},
+    {"id": "p2", "question": "A countdown that steps by 2. What does this print?",
+     "code": "n = 5\nwhile n > 0:\n    n -= 2\nprint(n)",
+     "choices": ["0", "1", "-1", "It runs forever"], "answer": 2,
+     "why": "n goes 5, 3, 1, -1. The condition is only checked at the TOP of each pass, so the loop doesn't stop the instant n 'reaches' 0: it stops when the check n > 0 fails, and n has already gone to -1. (It does end, because n keeps decreasing. With `while n != 0:` it would skip over 0 and run forever.)"},
+    {"id": "p3", "question": "What does this print?",
+     "code": "i = 0\nwhile i < 5:\n    if i == 2:\n        break\n    i += 1\nprint(i)",
+     "choices": ["2", "3", "5", "1"], "answer": 0,
+     "why": "break leaves the loop immediately, before the i += 1 line. When i is 2, the if is True, break runs, and the rest of the body (and the loop condition) is skipped. The value of i stays 2."}
+  ],
+  "visualizations": [
+    {"id": "v1", "component": "tracer", "title": "Trace: a PLC-style watchdog",
+     "props": {"code": "heartbeats = [True, False, False, True, False, False, False, True]\ntimer = 3\nscan = 0\ntripped = -1\nwhile scan < len(heartbeats):\n    if heartbeats[scan]:\n        timer = 3\n    else:\n        timer -= 1\n    if timer == 0:\n        tripped = scan\n        break\n    scan += 1\nprint(\"tripped at scan\", tripped)"},
+     "notice": "Each pass through the loop is one scan cycle. Watch `timer` in the variables table: it counts down on every missed heartbeat and reloads to 3 when one arrives. The trip only happens after 3 misses IN A ROW, and break skips the final scan += 1.",
+     "predictFirst": {"question": "The watchdog reloads to 3 on every heartbeat and counts down on every miss. On which scan does it trip, and what is `scan` when the loop ends?",
+                      "reveal": "It trips at scan 6. Scans 1 and 2 count the timer down to 1, but the heartbeat at scan 3 reloads it. Scans 4, 5, 6 count 2, 1, 0, so timer == 0 at scan 6, and break exits before scan += 1, so scan is still 6."}}
+  ],
+  "challenge": {
+    "task": "Write first_fix(lines, max_tries), which reads lines in order (at most max_tries, never past the end) and returns the first stripped GGA line with a real fix (7+ fields, quality not empty and not '0'), or '' on timeout; and settled_index(readings, threshold, needed), which returns the index where `needed` consecutive readings below threshold have been seen, or -1.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "off-by-one loop counter (starts at 1 and runs to n inclusive)",
+    "report": "Bench log: \"Heading drifts slowly even when the robot sits still after calibration. With a calibration buffer of exactly n samples, startup crashes with IndexError.\" gyro_bias(samples, n) is supposed to average the FIRST n gyro samples to estimate the bias. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: what three things does every while loop need so it's guaranteed to end correctly? Use your first_fix loop as the example, and explain what would go wrong if you removed the `i < len(lines)` part of the condition.",
+    "rubric": [
+      "Names a condition that is checked before every pass, plus a progress step in the body (i += 1) that eventually makes it False; without the progress step the loop never ends",
+      "Explains the limits: max_tries bounds the waiting time, and i < len(lines) prevents reading past the end (IndexError) when no fix ever arrives",
+      "Explains the early exit (return or break) on success, and how the code after the loop tells success from timeout (returning '' when nothing was found)"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "For first_fix, you need an index that moves forward one line per pass, and TWO reasons to stop: you've used up max_tries, or you've run out of lines. For settled_index, you need a counter that remembers how many low readings you've seen in a row, and something that resets it.",
+      "first_fix: loop while i < max_tries AND i < len(lines). Inside, strip the line, move i forward, and only look at field 6 after checking it's GGA and has at least 7 fields (a truncated line from power-up doesn't). Return the line as soon as it passes; after the loop, return ''. settled_index: on each reading, add 1 to the run if it's below the threshold, otherwise set the run back to 0; when the run equals needed, return the current index.",
+      "first_fix: i = 0; while i < max_tries and i < length of lines: line = strip(lines[i]); i += 1; if line starts with '$' and line[3 to 6) is 'GGA': fields = split(line); if there are at least 7 fields and field 6 is not '' and not '0': return line. After the loop: return ''. settled_index: run = 0; i = 0; while i < length of readings: if readings[i] < threshold: run += 1, else: run = 0; if run == needed: return i; i += 1. After the loop: return -1."
+    ],
+    "bug": [
+      "Write down the indexes the loop actually reads when n is 4. Which index does a list start at? Which index is the last one in a 4-item list?",
+      "The counter starts at 1, so samples[0] is skipped, and `<=` makes it read samples[n], one past the first n. Start at 0 and loop while i < n: that reads exactly indexes 0 to n - 1."
+    ]
+  }
+}

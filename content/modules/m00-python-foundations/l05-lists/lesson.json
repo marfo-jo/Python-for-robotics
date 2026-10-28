@@ -1,0 +1,142 @@
+{
+  "id": "m00.l05",
+  "title": "0.5 Lists",
+  "minutes": 80,
+  "objectives": [
+    "Build a list from nothing with [] and append(), and read items back with positive and negative indexes",
+    "Slice a list, use len() and `in`, and explain why the last valid index is len - 1 (and what IndexError means)",
+    "Guard an index with a length check so a cut-off serial line can't crash your parser",
+    "Explain list aliasing (two names, one list) and make a real copy with [:] when you need one",
+    "Loop over a list with for and enumerate, and find the max/min of a list of readings"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: collecting satellite counts, HDOP, and altitude from a $GPGGA log, and the rolling buffers a ROS 2 GPS driver keeps of recent fixes"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "A sentence's fields are a list",
+      "file": "examples/ex1.py",
+      "expectedOutput": "list\n15\n$GPGGA 08\n*47\n['4807.038', 'N', '01131.000', 'E']\n14\nTrue False"
+    },
+    {
+      "id": "ex2",
+      "title": "Collect satellites and HDOP from a log",
+      "file": "examples/ex2.py",
+      "expectedOutput": "[9, 3, 7, 8]\n[1.1, 2.8, 1.4, 1.0]\n4 fixes\nbest HDOP: 1.0\nworst HDOP: 2.8\nfix 1 is poor: HDOP 2.8 with 3 satellites\naverage satellites: 6.75"
+    },
+    {
+      "id": "ex3",
+      "title": "A rolling window of altitudes (and an aliasing surprise)",
+      "file": "examples/ex3.py",
+      "expectedOutput": "[12.3]\n[12.3, 13.0]\n[12.3, 13.0, 12.8]\n[13.0, 12.8, 12.9]\n[12.8, 12.9, 13.1]\nnewest: 13.1\noldest kept: 12.8\n[12.8, 12.9, 13.1, 99.9]\n[12.8, 12.9, 13.1]\nTrue False"
+    },
+    {
+      "id": "ex4",
+      "title": "Cut-off lines: check the length before you index",
+      "file": "examples/ex4.py",
+      "expectedOutput": "15 fields\n  altitude 13.1 m\n3 fields\n  no altitude in this sentence\n15 fields\n  no altitude in this sentence\n4220.12\n['$GPGGA', '152310.00', '4220.12']"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "A sentence was cut off mid-transmission. What does this print?",
+      "code": "fields = \"$GPGGA,152310.00,4220.12\".split(\",\")\nprint(fields[len(fields)])",
+      "choices": [
+        "4220.12",
+        "$GPGGA",
+        "IndexError",
+        "3"
+      ],
+      "answer": 2,
+      "why": "len(fields) is 3, so the valid indexes are 0, 1, and 2. Index 3 is one past the end, so Python raises IndexError. The last item is fields[len(fields) - 1], or simply fields[-1]. This is the classic off-by-one: the length counts items starting from 1, indexes start from 0."
+    },
+    {
+      "id": "p2",
+      "question": "You make a 'backup' of your altitude window, then add a reading through the backup. What does this print?",
+      "code": "window = [12.3, 13.0]\nbackup = window\nbackup.append(12.8)\nprint(window)",
+      "choices": [
+        "[12.3, 13.0]",
+        "[12.3, 13.0, 12.8]",
+        "[12.8, 12.3, 13.0]",
+        "None"
+      ],
+      "answer": 1,
+      "why": "backup = window does NOT copy anything. It gives the same list a second name, like two wires landed on the same terminal. Appending through either name changes the one list, so window sees 12.8 too. To get an independent copy, write backup = window[:]. (append adds to the END, which is why it isn't [12.8, 12.3, 13.0].)"
+    },
+    {
+      "id": "p3",
+      "question": "split() gives you a list of strings. What does this print?",
+      "code": "fields = \"$GPGGA,152305.00,4220.1234,N,07105.5678,W,1,09\".split(\",\")\nprint(9 in fields, \"09\" in fields, \"GGA\" in fields)",
+      "choices": [
+        "True True True",
+        "False True False",
+        "False True True",
+        "True False False"
+      ],
+      "answer": 1,
+      "why": "`in` on a list compares whole items with ==. The items are strings, so the number 9 never equals the text '09' (False), while '09' matches exactly (True). 'GGA' is only PART of the item '$GPGGA', and a list doesn't search inside its items, so that's False too. (On a string, `in` does search for text inside it, which is why \"GGA\" in line works on the whole line.)"
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: two names, one list",
+      "props": {
+        "code": "log = [12.3, 13.0]\nbackup = log\nsafe = log[:]\nlog.append(12.8)\nprint(backup)\nprint(safe)\nprint(backup is log, safe is log)"
+      },
+      "notice": "After log.append(12.8), BOTH log and backup change in the variables table, because they are the same list. safe was built by log[:] before the append, so it's a separate list and stays [12.3, 13.0].",
+      "predictFirst": {
+        "question": "Before you trace: after log.append(12.8), what will backup and safe each hold? Will backup is log be True? Will safe is log?",
+        "reveal": "backup is [12.3, 13.0, 12.8]: it's just another name for log. safe is [12.3, 13.0]: log[:] built a NEW list before the append. So backup is log is True, and safe is log is False."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "tracer",
+      "title": "Trace: find the worst HDOP with enumerate",
+      "props": {
+        "code": "hdops = [1.1, 2.8, 1.4, 1.0]\nworst = hdops[0]\nworst_i = 0\nfor i, h in enumerate(hdops):\n    if h > worst:\n        worst = h\n        worst_i = i\nprint(\"worst fix:\", worst_i, \"HDOP\", worst)\nprint(\"check:\", max(hdops))"
+      },
+      "notice": "Watch i and h change together on every pass: enumerate hands you the position AND the item. worst only changes when a bigger value shows up. max() gives the same answer in one call, but only the loop tells you WHERE the worst fix was."
+    }
+  ],
+  "challenge": {
+    "task": "Write satellite_counts(sentences), which returns a list of int satellite counts from the GGA sentences in a list of NMEA lines (skipping other types, cut-off lines, and empty satellite fields), and last_n(readings, n), which returns a new list with the newest n readings without changing the input.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "list aliasing (a buffer changed through a second name)",
+    "report": "Post-run report from the field team: \"The altitude plot looks great, but the saved raw log is wrong. The 87.4 m multipath spike we saw live is missing from the raw data. It shows 20.0 m, the plot ceiling.\" clamped() is supposed to return a clamped copy for plotting and leave the raw log untouched. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: why did result = altitudes let clamped() damage the raw log, and how does altitudes[:] fix it? And why must satellite_counts check the length of the field list before reading fields[7]?",
+    "rubric": [
+      "Explains that assignment gives a second name to the SAME list (no copy is made), so a change through either name shows up through both",
+      "Explains that a full slice [:] builds a new, separate list, so changing the copy leaves the original alone",
+      "Explains that a cut-off sentence has fewer fields, so fields[7] would raise IndexError; the last valid index is len - 1, so the list needs more than 7 items"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "Two separate jobs. For satellite_counts: which index is the satellites field, and what must be true about the field list before you're allowed to read that index? For last_n: which slice gives the END of a list, and what number is -0?",
+      "satellite_counts: start with an empty list, loop over the sentences, strip and split each one, and keep it only if it is a GGA sentence, its field list has MORE than 7 items, and field 7 isn't empty. Convert field 7 to a number before appending. last_n: a negative slice gives the newest n items and is always a new list, but n == 0 needs its own case, because -0 is just 0 and [0:] is the whole list.",
+      "satellite_counts: counts = empty list; for each line in sentences: fields = split(strip(line), ','); if characters 3 to 6 of fields[0] are 'GGA' AND length of fields > 7 AND fields[7] is not empty: append int(fields[7]) to counts. return counts. last_n: if n is 0 or less: return an empty list; otherwise return readings sliced from -n to the end."
+    ],
+    "bug": [
+      "After the line result = altitudes runs, how many lists exist? Two, or one list with two names? Try printing result is altitudes.",
+      "Make result a real copy (a full slice) BEFORE the loop changes anything. Then the assignments inside the loop go into the copy, and the raw log is never touched."
+    ]
+  }
+}

@@ -84,7 +84,14 @@ export async function renderModule(root, curriculum, moduleId) {
   const lessonList = h("ol", { class: "lesson-list" });
   let allMastered = true;
   for (const [i, id] of mod.lessons.entries()) {
-    const meta = await loadJSON(`${mod.base}/${mod.lessonDirs[id]}/lesson.json`);
+    let meta;
+    try {
+      meta = await loadJSON(`${mod.base}/${mod.lessonDirs[id]}/lesson.json`);
+    } catch {
+      allMastered = false;
+      lessonList.append(h("li", { class: "locked" }, h("span", { class: "state" }, "·"), `${mod.lessonTitles?.[id] || id} (not available yet)`));
+      continue;
+    }
     const rec = store.getState().lessons[id];
     const mastered = Boolean(rec && rec.masteredAt);
     if (!mastered) allMastered = false;

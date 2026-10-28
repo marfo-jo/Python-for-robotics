@@ -67,10 +67,10 @@ def run_script(code, cwd=None, timeout=20):
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "solution.py"
         path.write_text(code, encoding="utf-8")
-        env = dict(os.environ, MPLBACKEND="Agg", PYTHONIOENCODING="utf-8")
+        env = dict(os.environ, MPLBACKEND="Agg", PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
         try:
             proc = subprocess.run([PY, str(path)], cwd=cwd or tmp, capture_output=True,
-                                  text=True, timeout=timeout, env=env, encoding="utf-8")
+                                  text=True, timeout=timeout, env=env, encoding="utf-8", errors="replace")
         except subprocess.TimeoutExpired:
             return "", "TimeoutError"
         err = ""
@@ -92,11 +92,11 @@ def run_pytest(solution_code, test_code, test_name, extra_files=None, timeout=60
             dest.write_text(content, encoding="utf-8")
         # The simulator is importable in tests, exactly like in the browser.
         shutil.copy(ROOT / "app" / "py" / "pfr_sim.py", tmpd / "pfr_sim.py")
-        env = dict(os.environ, MPLBACKEND="Agg", PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+        env = dict(os.environ, MPLBACKEND="Agg", PYTHONIOENCODING="utf-8", PYTHONUTF8="1", PYTHONDONTWRITEBYTECODE="1")
         try:
             proc = subprocess.run([PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line",
                                    "--color=no", test_name], cwd=tmp, capture_output=True,
-                                  text=True, timeout=timeout, env=env, encoding="utf-8")
+                                  text=True, timeout=timeout, env=env, encoding="utf-8", errors="replace")
         except subprocess.TimeoutExpired:
             return False, "timeout"
         tail = [l for l in proc.stdout.strip().splitlines() if l.strip()]
@@ -111,6 +111,14 @@ def read(path):
 
 def norm(text):
     return "\n".join(line.rstrip() for line in text.strip().splitlines())
+
+
+def actual_output(out, err):
+    """What a predict/quiz choice must equal: stdout, then the exception type if it raised."""
+    if not err:
+        return norm(out)
+    etype = err.split(":")[0].strip()
+    return f"{norm(out)}\n{etype}" if norm(out) else etype
 
 
 # --------------------------------------------------------------------- lessons
@@ -161,9 +169,7 @@ def verify_lesson(rep, module_dir, lesson_dir, lesson_id):
 
     for p in meta["predict"]:
         out, err = run_script(p["code"])
-        actual = norm(out) if not err else err.split(":")[0].strip()
-        if err and norm(out):
-            actual = norm(out) + "\n" + err.split(":")[0].strip()
+        actual = actual_output(out, err)
         choices = [norm(c) for c in p["choices"]]
         good = choices[p["answer"]] == actual
         others = [i for i, c in enumerate(choices) if c == actual and i != p["answer"]]
@@ -176,7 +182,8 @@ def verify_lesson(rep, module_dir, lesson_dir, lesson_id):
             import pfr_harness  # noqa: PLC0415
             res = json.loads(pfr_harness.trace_user(v["props"]["code"]))
             ok = (res["error"] is None) or v["props"].get("expectError")
-            rep.check(bool(ok) and res["steps"], scope, f"tracer {v['id']} runs ({len(res['steps'])} steps)")
+            rep.check(bool(ok) and res["steps"] and not res["truncated"], scope,
+                      f"tracer {v['id']} runs to completion ({len(res['steps'])} steps{', TRUNCATED at the step cap' if res['truncated'] else ''})")
 
     # Hidden tests
     ch = meta["challenge"]
@@ -241,7 +248,7 @@ def verify_quiz(rep, scope, path):
         rep.check(good, scope, f"quiz {q['id']} has a valid answer and distinct choices")
         if q.get("code") and q.get("checkOutput"):
             out, err = run_script(q["code"])
-            actual = norm(out) if not err else err.split(":")[0].strip()
+            actual = actual_output(out, err)
             rep.check(norm(q["choices"][q["answer"]]) == actual, scope,
                       f"quiz {q['id']} answer matches real output (real: {actual!r})")
 
@@ -315,7 +322,8 @@ def verify_module_tests(rep, scope, test_path, ref, t):
             (tmpd / f"{name}.py").write_text(code, encoding="utf-8")
             proc = subprocess.run([PY, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "--color=no",
                                    test_path.name], cwd=tmp, capture_output=True, text=True, timeout=60,
-                                  env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1"), encoding="utf-8")
+                                  env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1", PYTHONIOENCODING="utf-8",
+                                           PYTHONUTF8="1"), encoding="utf-8", errors="replace")
             tail = [l for l in proc.stdout.strip().splitlines() if l.strip()]
             return proc.returncode == 0, (tail[-1] if tail else proc.stderr[-200:])
 

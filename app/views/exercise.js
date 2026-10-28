@@ -89,7 +89,7 @@ export function renderExercise(parent, opts) {
   async function run() {
     cm.markError(0);
     clear(out).append(h("div", { class: "muted" }, "Running…"));
-    const res = await runCode(cm.getValue(), opts.timeoutMs);
+    const res = await runCode(cm.getValue(), opts.timeoutMs, opts.extraFiles);
     renderOutput(out, res);
     if (res.error) cm.markError(res.error.lineno);
     lastOutput = (res.stdout || "") + (res.error ? `\n${res.error.traceback || res.error.type + ": " + res.error.message}` : "");

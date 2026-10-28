@@ -1,0 +1,160 @@
+{
+  "title": "C1 quiz: toolchains and the build pipeline",
+  "items": [
+    {
+      "id": "q1",
+      "q": "In gcc -Wall -Wextra -std=c11 hello.c -o hello, what does -o hello do?",
+      "choices": [
+        "Names the output executable hello (instead of the default a.out)",
+        "Turns on optimization level hello",
+        "Opens hello.c for reading",
+        "Runs the program after compiling it"
+      ],
+      "answer": 0,
+      "why": "-o sets the output file name. Optimization is -O (capital letter, a number after it), and gcc never runs your program: the ./hello after && does that."
+    },
+    {
+      "id": "q2",
+      "q": "Why does check.sh add -Werror?",
+      "choices": [
+        "It makes the program run faster",
+        "It turns every warning into an error, so code with a likely bug can't build",
+        "It hides warnings so the output is cleaner",
+        "It is required to link printf"
+      ],
+      "answer": 1,
+      "why": "A warning means 'legal, but probably not what you meant'. With -Werror the build stops until you understand and fix it, like refusing to run a line while a fault light is on. Many professional firmware builds use it."
+    },
+    {
+      "id": "q3",
+      "q": "You compile a file and get: undefined reference to 'pritnf'. Which stage of the pipeline reported it?",
+      "choices": [
+        "The preprocessor",
+        "The compiler",
+        "The linker",
+        "The bootloader"
+      ],
+      "answer": 2,
+      "why": "'undefined reference' is the linker's message: your object file calls a function named pritnf and no library provides it. (The compiler only warned about an implicit declaration; with -Werror, that warning stops the build even earlier.)"
+    },
+    {
+      "id": "q4",
+      "q": "What does #include <stdio.h> do?",
+      "choices": [
+        "Links the standard I/O library into the program at run time",
+        "Pastes the text of the stdio.h header in, so the compiler knows the declarations of printf and friends",
+        "Downloads the stdio library from the internet",
+        "Starts the serial port"
+      ],
+      "answer": 1,
+      "why": "#include is a preprocessor directive: pure text pasting, before compiling. The header holds declarations; the actual printf code is in the C library, which the linker connects later."
+    },
+    {
+      "id": "q5",
+      "code": "#include <stdio.h>\n\nint main(void)\n{\n    printf(\"A\");\n    printf(\"B\\n\");\n    return 0;\n}",
+      "q": "What does this program print?",
+      "choices": [
+        "AB (on one line, then a newline)",
+        "A and B on two separate lines",
+        "Nothing, because there is no newline after A",
+        "A compile error: printf needs a newline"
+      ],
+      "answer": 0,
+      "why": "printf prints exactly what you give it. Unlike Python's print, it never adds a newline, so A and B land on the same line, and the \\n after B ends it."
+    },
+    {
+      "id": "q6",
+      "q": "What does main() returning 0 mean on the desktop?",
+      "choices": [
+        "The program printed zero characters",
+        "Success: the shell sees exit status 0 (check it with echo $?)",
+        "The program will restart",
+        "An error occurred"
+      ],
+      "answer": 1,
+      "why": "The return value of main is the exit status. 0 means success and anything else means failure. Scripts, make, check.sh, and CI pipelines all read it, the way a PLC reads a drive's 'done OK' bit."
+    },
+    {
+      "id": "q7",
+      "q": "An Arduino sketch has setup() and loop() but no main(). Where is main()?",
+      "choices": [
+        "There is none: the ATmega328P runs setup() directly from reset",
+        "In the Arduino core library: it calls init(), then setup() once, then loop() forever",
+        "The IDE runs loop() repeatedly from Windows over USB",
+        "In the bootloader"
+      ],
+      "answer": 1,
+      "why": "The core's main.cpp does init(); setup(); for (;;) { loop(); }. The linker joins your sketch to it. The bootloader only loads new programs; it is not part of your program's run."
+    },
+    {
+      "id": "q8",
+      "q": "Inside loop() you add delay(2000). In PLC terms, what have you done?",
+      "choices": [
+        "Added a timer that runs in the background while other logic continues",
+        "Stretched the scan time to more than 2 seconds: nothing else in loop() runs during the delay",
+        "Changed the baud rate",
+        "Nothing important: delay only affects the LED"
+      ],
+      "answer": 1,
+      "why": "delay() blocks. The CPU sits in a busy wait, so every other input check and output update in loop() waits too, like a slow rung that stretches every scan. Non-blocking millis() timing (C14) fixes this."
+    },
+    {
+      "id": "q9",
+      "q": "Your sketch calls Serial.begin(115200), but the Serial Monitor shows random garbage characters. Most likely cause?",
+      "choices": [
+        "The Uno's flash is full",
+        "The Serial Monitor's baud setting does not match 115200",
+        "The LED is on pin 13",
+        "The sketch has no main()"
+      ],
+      "answer": 1,
+      "why": "Both ends of a UART must agree on the bit rate. If the monitor samples at 9600 while the Uno sends at 115200, it decodes the wrong bits, exactly like a scope's UART decoder set to the wrong baud."
+    },
+    {
+      "id": "q10",
+      "q": "Upload fails with 'port busy' or 'access is denied' on COM3. What should you check first?",
+      "choices": [
+        "Whether another program (a second Serial Monitor, a Python script with pyserial) already has COM3 open",
+        "Whether the sketch has a syntax error",
+        "Whether -Wall is enabled",
+        "Whether the LED is burnt out"
+      ],
+      "answer": 0,
+      "why": "Only one program can hold a serial port. The compile succeeded (that's a different message); the upload step (avrdude) could not open the port. Close the other user of COM3. This comes up constantly once your Python logger exists."
+    },
+    {
+      "id": "q11",
+      "q": "Which part of the Arduino upload pipeline writes your program into the Uno's flash?",
+      "choices": [
+        "avr-gcc",
+        "The Serial Monitor",
+        "avrdude on the PC, talking over USB serial to the bootloader on the Uno",
+        "The preprocessor"
+      ],
+      "answer": 2,
+      "why": "avr-gcc builds the .hex file. avrdude sends it over USB serial to the bootloader, which writes it into flash and then jumps to your program."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Walk me through what happens between writing a C file and having it run on a microcontroller.",
+      "rubric": [
+        "Names the preprocessor stage (#include and #define are text substitution)",
+        "Explains that the compiler turns C into assembly/machine code for the specific target CPU (a cross-compiler such as avr-gcc for an AVR)",
+        "Explains linking: object files are joined with libraries (startup code, the C library, the Arduino core) and addresses are resolved",
+        "Describes getting the image onto the chip (hex/bin file, programmed through a bootloader over serial or through a hardware programmer/debugger)",
+        "Mentions that reading which stage an error came from (compile error vs undefined reference) tells you where to look"
+      ]
+    },
+    {
+      "q": "What's the difference between a desktop C program's main() and an Arduino sketch's setup() and loop()? Why doesn't firmware main() return?",
+      "rubric": [
+        "Desktop: the OS loads the program and calls main(); returning hands an exit status back to the OS",
+        "Arduino: the core supplies main(), which initializes the hardware, calls setup() once, then calls loop() in an infinite loop",
+        "Explains that bare-metal firmware has no OS to return to, so main() must never exit (it would run off into undefined behavior)",
+        "Connects it to a PLC scan cycle or super-loop: each pass reads inputs, runs logic, writes outputs",
+        "Notes that blocking calls such as delay() stretch the loop and starve everything else, so real firmware uses non-blocking timing or interrupts"
+      ]
+    }
+  ]
+}

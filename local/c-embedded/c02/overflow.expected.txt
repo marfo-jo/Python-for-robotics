@@ -1,0 +1,9 @@
+uint8_t: 255 + 1 = 0
+uint8_t: 0 - 1 = 255
+uint16_t: 65535 + 1 = 0
+int16_t: 32767 + 1 stored back = -32768
+elapsed across the wrap = 20 ms
+uint32_t ms counter wraps after 49.7 days
+long ticks = 100000
+0xFF = 255
+INT16_MAX = 32767 = 0x7FFF

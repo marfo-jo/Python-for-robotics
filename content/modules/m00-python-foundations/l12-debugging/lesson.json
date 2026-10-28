@@ -1,0 +1,127 @@
+{
+  "id": "m00.l12",
+  "title": "0.12 Debugging like a technician",
+  "minutes": 90,
+  "objectives": [
+    "Debug systematically: reproduce, isolate, hypothesize, test, fix, verify, always comparing expected with actual values",
+    "Use print probes that tell the truth: repr() and f\"{x=}\" to expose strings vs numbers, empty fields, and hidden \\r\\n",
+    "Bisect a multi-stage data pipeline to find the stage where a value first goes wrong",
+    "Use a debugger (the tracer in the browser, VS Code locally): breakpoints, step over, step into, watch expressions, and the call stack"
+  ],
+  "skills": {
+    "python": 3,
+    "softeng": 1
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: tracking down why a driver published wrong positions; Lab 4: dead reckoning, where GPS and wheel-odometry tracks disagree and you must find which stage of the processing is wrong"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "print() vs repr()",
+      "file": "examples/ex1.py",
+      "expectedOutput": "8 8\n'8' 8\nFalse\nstr int\n[66]\n'66\\r\\n'\n'' ' ' '\\t'\n0.30000000000000004 0.30 False"
+    },
+    {
+      "id": "ex2",
+      "title": "f\"{x=}\" probes",
+      "file": "examples/ex2.py",
+      "expectedOutput": "sats='09'\nalt=10.2\nlen(fields)=15\nfields[-1]='*62\\r\\n'\nsats == 9=False\nalt * 3.28084=33.5\nstage 2: sats='09' alt=10.2"
+    },
+    {
+      "id": "ex3",
+      "title": "Bisecting a speed pipeline",
+      "file": "examples/ex3.py",
+      "expectedOutput": "stage 1: s1[-4:]='A*75'   expect 'A*75', no \\r\\n\nstage 2: s2='5.20'   expect '5.20'\nstage 3: s3=5.2   expect 5.2\nstage 4: s4=9.630   expect about 2.7 m/s\nknots_to_mps(1)=1.852   (1 knot should be 0.514 m/s)\nfixed: knots_to_mps(1)=0.514   knots_to_mps(s3)=2.675"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "The satellites field from split() and the number you expected. What does this print?",
+      "code": "x = \"8\"\ny = 8\nprint(x, y)\nprint(x == y)",
+      "choices": [
+        "8 8\nTrue",
+        "8 8\nFalse",
+        "'8' 8\nFalse",
+        "TypeError"
+      ],
+      "answer": 1,
+      "why": "print() shows the string '8' and the int 8 exactly the same way, without quotes, so the output can't tell you they differ. But a str is never equal to an int, so the comparison is False (comparing with == never raises; it just says False). This is why debugging prints should use repr(x) or f\"{x=}\", which would show '8' with quotes."
+    },
+    {
+      "id": "p2",
+      "question": "A debug probe on the end of a serial line. What does it print?",
+      "code": "line = \"$GPGGA,,,,,,0,,,,,,,,*66\\r\\n\"\ntail = line[-4:]\nprint(f\"{tail=}\")",
+      "choices": [
+        "tail=66",
+        "tail='66'",
+        "tail='66\\r\\n'",
+        "tail='*66'"
+      ],
+      "answer": 2,
+      "why": "The last 4 characters are '6', '6', '\\r', '\\n'. f\"{tail=}\" prints the expression text, '=', and repr() of the value, so the string gets quotes and the invisible \\r\\n is shown as escape sequences. A plain print(tail) would show just 66 and hide the real problem: you sliced before stripping."
+    },
+    {
+      "id": "p3",
+      "question": "You add a debug print to check the conversion. What does this print?",
+      "code": "def to_mps(knots):\n    return knots * 0.514444\n    print(\"converted\", knots)\n\nprint(round(to_mps(10), 2))",
+      "choices": [
+        "converted 10\n5.14",
+        "5.14",
+        "converted 10",
+        "5.144"
+      ],
+      "answer": 1,
+      "why": "return ends the function immediately, so a print placed after it never runs (it's dead code). The function returns 5.14444, rounded to 5.14. If a debug print 'doesn't show up', check whether the line is ever reached: after a return, inside an if that's False, or in a function that is never called."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: why does it say 'no fix'?",
+      "props": {
+        "code": "def fix_quality(sentence):\n    fields = sentence.split(\",\")\n    return fields[6]\n\n\ndef has_fix(sentence):\n    quality = fix_quality(sentence)\n    return quality == 1 or quality == 2\n\n\ns = \"$GPGGA,153012.00,4220.0101,N,07105.6600,W,1,09,0.9,10.2,M,-33.1,M,,*62\"\nprint(fix_quality(s))\nif has_fix(s):\n    print(\"fix\")\nelse:\n    print(\"no fix\")\n"
+      },
+      "notice": "Step into has_fix, then into fix_quality: the call stack grows to <module> → has_fix → fix_quality. fix_quality returns '1' WITH quotes in the variables table: it's a string. print() showed it as 1, which looked fine. In has_fix, '1' == 1 is False and '1' == 2 is False, so it returns False. The fault is detected in has_fix, but the cause is the missing int() conversion.",
+      "predictFirst": {
+        "question": "The sentence has fix quality 1. What will the two print lines show? Then: in the variables table, what exactly will quality hold inside has_fix?",
+        "reveal": "It prints 1, then no fix. quality holds the STRING '1' (with quotes in the tracer), and a string is never equal to the int 1. print(fix_quality(s)) hid that, because print() doesn't show quotes. Fix: convert with int() (or compare with '1' and '2')."
+      }
+    }
+  ],
+  "challenge": {
+    "task": "A 4-stage GPS track-length pipeline (gga_fixes → parse_latlon → to_local_xy → path_length, joined by track_length) has three planted bugs in three different stages (stage 1, stage 3, stage 4): a type mismatch, a units mistake, and an off-by-one. The learner must find and fix all three using the debugging method, without rewriting the design. Don't name the bugs; guide them to probe and compare expected vs actual.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "wrong dt (hhmmss timestamp treated as a plain number)",
+    "report": "Lab 4 speed comparison: \"GPS speed matches wheel odometry (about 1.5 m/s) almost all the time. But once a minute, exactly when the seconds roll over from :59 to :00, the GPS speed drops to about 0.04 m/s for one sample, then recovers. Odometry shows no slowdown. It happens on every log, at the start of every minute.\" Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: describe how you found the three bugs in the track pipeline, step by step. Which measurement (a failing test name, a probe, a trace) pointed you at each stage? What did you expect versus what you saw? How does this compare with how you would troubleshoot a fault on a PLC-controlled machine?",
+    "rubric": [
+      "Describes a systematic process (reproduce with a small input, isolate the stage, form a specific hypothesis, test it, fix one thing, verify) rather than random changes",
+      "Uses expected-vs-actual evidence: names at least one concrete probe or test result (for example, '0' vs 0 seen with repr, cos of degrees giving the wrong east distance, a 3-point path missing its last segment)",
+      "Connects isolation to half-splitting: probing stage outputs (or reading which stage's tests fail) narrows the fault to one stage, like measuring in the middle of a circuit"
+    ],
+    "minWords": 60
+  },
+  "hints": {
+    "challenge": [
+      "Submit once without changing anything and read WHICH tests fail: each test name starts with the stage it probes. Pick one failing stage, call that function alone with the test's input, and print the result with f\"{x=}\". What did you expect? What type is each value you compare? What units does math.cos expect? How many segments does a path through 3 points have?",
+      "Stage 1: probe f\"{fields[6]=}\" for the no-fix sentence; compare it with what the if checks against. Stage 3: compute the expected east distance by hand for 0.001° at 42° (about 82.6 m) and compare; check what is passed to math.cos. Stage 4: try path_length on two points; count how many times the loop body runs, and compare with the number of segments.",
+      "For each failing stage: (1) reproduce with the test's tiny input; (2) print the inputs and output with labels; (3) write the expected value next to it; (4) find the first line where actual differs from expected; (5) change only that line: compare the quality with the text that the field really contains; give cos the latitude converted to radians; make the loop visit every index from 1 up to and including the last point; (6) re-run all the tests."
+    ],
+    "bug": [
+      "Reproduce it with just two samples: 153059.00 and 153100.00. How many seconds apart are they really? Print f\"{utc_seconds('153100.00') - utc_seconds('153059.00')=}\".",
+      "hhmmss.ss is not a number of seconds: 15:31:00 minus 15:30:59 is 1 second, but 153100 - 153059 = 41. Split the text into hours, minutes, and seconds (slices [0:2], [2:4], [4:]) and return hours * 3600 + minutes * 60 + seconds."
+    ]
+  }
+}

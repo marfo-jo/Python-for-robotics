@@ -1,0 +1,79 @@
+{
+  "id": "m00.l02",
+  "title": "0.2 Conditionals and booleans",
+  "minutes": 75,
+  "objectives": [
+    "Write if / elif / else chains whose branches are checked in the right order, and explain why only one branch runs",
+    "Combine conditions with and / or / not, write comparison chains like 10.5 <= volts < 11.1, and tell = (store) from == (compare)",
+    "Use truthiness to detect empty NMEA fields, and explain why the text \"0\" is True while the empty string \"\" is False",
+    "Reject non-GGA sentences and classify GPS fix quality codes 0 / 1 / 2 / 4 / 5 from a real, messy sentence"
+  ],
+  "skills": {"python": 3},
+  "whereYouSawThis": {"course": "EECE5554 Robot Sensing and Navigation", "topic": "GPS lab: rejecting non-GGA sentences and checking fix quality before publishing a fix (also ME5245 Mechatronics: threshold logic and battery/limit monitoring)"},
+  "examples": [
+    {"id": "ex1", "title": "Comparisons, booleans, and comparison chains", "file": "examples/ex1.py",
+     "expectedOutput": "True\nTrue False\nFalse\nTrue\nFalse\nTrue\nFalse"},
+    {"id": "ex2", "title": "Truthiness: empty NMEA fields are False", "file": "examples/ex2.py",
+     "expectedOutput": "'0' ''\nTrue False\nTrue\nsatellite field is empty\nreceiver says: no fix"},
+    {"id": "ex3", "title": "Validate a sentence and classify its fix", "file": "examples/ex3.py",
+     "expectedOutput": "GN GGA quality 5 -> RTK float\nenough satellites: 11\nFalse"},
+    {"id": "ex4", "title": "Battery bands and hysteresis", "file": "examples/ex4.py",
+     "expectedOutput": "10.9 LOW\ndocking: True\ndocking: False"}
+  ],
+  "predict": [
+    {"id": "p1", "question": "The receiver reports fix quality \"0\" (no fix). What does this print?",
+     "code": "quality = \"0\"\nif quality:\n    print(\"fix\")\nelse:\n    print(\"no fix\")",
+     "choices": ["fix", "no fix", "TypeError"], "answer": 0,
+     "why": "`if quality:` asks \"is this string non-empty?\", not \"is this number zero?\". \"0\" is a one-character string, so it's truthy and the first branch runs. Only the empty string \"\" is falsy. To test for no fix, compare the text: `if quality == \"0\":`."},
+    {"id": "p2", "question": "You want to accept only GPS (\"1\") or DGPS (\"2\") fixes. What does this print?",
+     "code": "quality = \"0\"\nif quality == \"1\" or \"2\":\n    print(\"usable\")\nelse:\n    print(\"rejected\")",
+     "choices": ["usable", "rejected", "SyntaxError"], "answer": 0,
+     "why": "Python reads this as `(quality == \"1\") or (\"2\")`. The left side is False, so `or` evaluates the right side: the string \"2\" on its own, which is non-empty and therefore truthy. The condition is always true. Each side of `or` must be a full comparison: `quality == \"1\" or quality == \"2\"`."},
+    {"id": "p3", "question": "The pack reads exactly 11.1 V. What does this print?",
+     "code": "volts = 11.1\nprint(10.5 <= volts < 11.1, volts >= 11.1)",
+     "choices": ["True True", "False True", "True False", "False False"], "answer": 1,
+     "why": "A comparison chain `a <= x < b` means `a <= x and x < b`. 11.1 < 11.1 is False, so the whole chain is False. The second test 11.1 >= 11.1 is True. Boundaries belong to exactly one band: decide on purpose which side gets the `=`."}
+  ],
+  "visualizations": [
+    {"id": "v1", "component": "tracer", "title": "Trace: which branch runs?",
+     "props": {"code": "line = \"$GPGGA,142210.00,4220.1157,N,07105.4884,W,1,,1.9,13.0,M,-33.1,M,,*69\"\nfields = line.split(\",\")\nquality = fields[6]\nsats = fields[7]\nusable = False\nif line[3:6] == \"GGA\" and quality != \"0\":\n    if sats and int(sats) >= 4:\n        usable = True\n    else:\n        print(\"fix reported, but no satellite count\")\nprint(\"usable:\", usable)"},
+     "notice": "Watch the line highlight jump: Python skips every branch whose condition is False. On the inner if, `sats` is the empty string, so `and` stops right there and int(sats) never runs. That's short-circuiting, and it's why the code doesn't crash with ValueError.",
+     "predictFirst": {"question": "The quality field is '1' but the satellite field is empty. Which print runs? Does int(sats) ever run (and would int('') crash)?",
+                      "reveal": "The outer if is True (it's GGA and quality is '1'). On the inner if, `sats` is '' (falsy), so `and` short-circuits: int(sats) is never called, so no ValueError. The else branch prints the warning, then 'usable: False'."}},
+    {"id": "v2", "component": "nmea-fields", "title": "Empty fields in a no-fix sentence",
+     "props": {"sentence": "$GPGGA,,,,,,0,,,,,,,,*66"},
+     "notice": "Fields 1 to 5 are empty strings (falsy). Field 6 is '0', which is NOT empty, so `if fields[6]:` would be True even though there's no fix. Try typing a satellite count into field 7, or deleting the 0 so field 6 is empty too."}
+  ],
+  "challenge": {
+    "task": "Write fix_status(sentence), which returns 'not GGA', 'no data', 'no fix', 'GPS', 'DGPS', 'RTK fixed', 'RTK float', or 'other', and is_usable(sentence, min_sats), which is True only for a GGA sentence with a real fix (quality 1, 2, 4, or 5) and a non-empty satellite count >= min_sats. Inputs may have whitespace, \\r\\n, empty fields, or be non-GGA.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "unreachable elif branch (conditions checked in the wrong order)",
+    "report": "Field test log: \"The robot drained its pack to 9.8 V and never returned to the dock. The dashboard showed LOW the whole time, never CRITICAL.\" battery_state(volts) is supposed to return 'OK', 'LOW', or 'CRITICAL' for a 3S LiPo pack. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: why does `if quality == \"1\" or \"2\":` accept every sentence, even quality \"0\"? And why does `if sats and int(sats) >= 4:` NOT crash when the satellite field is empty, while `if int(sats) >= 4 and sats:` does?",
+    "rubric": [
+      "Explains that each side of `or` is its own condition, so `\"2\"` alone is evaluated, and a non-empty string is truthy, so the whole condition is always True",
+      "Gives the fix: repeat the comparison on both sides (`quality == \"1\" or quality == \"2\"`)",
+      "Explains short-circuiting: `and` evaluates left to right and stops at the first False value; the empty string is falsy, so int('') is never called when `sats` comes first"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "Clean the line first. Then ask the questions in order: is it a GGA sentence at all? Is the quality field empty? Then which code is it? The order of your checks matters, and remember every field is TEXT.",
+      "Strip, then reject anything that doesn't start with '$' or whose characters [3:6] aren't 'GGA'. Split on commas: quality is field 6, satellites are field 7. Compare quality to the strings \"0\", \"1\", ... with an if / elif chain. In is_usable, check that the satellite field is non-empty BEFORE converting it with int(), and use >= for 'at least'.",
+      "fix_status: line = strip(sentence); if line doesn't start with '$' OR line[3 to 6) is not 'GGA': return 'not GGA'. quality = field 6 of split(line). if quality is empty: 'no data'; elif quality is the text '0': 'no fix'; elif '1': 'GPS'; ... else: 'other'. is_usable: same rejection (return False); real_fix = quality is '1' or quality is '2' or quality is '4' or quality is '5'; return real_fix and sats is not empty and int(sats) >= min_sats."
+    ],
+    "bug": [
+      "Walk through battery_state(9.8) by hand. Which condition is checked first? Is it True?",
+      "An if / elif chain stops at the FIRST True condition. Any voltage below 10.5 is also below 11.1, so the CRITICAL branch can never be reached. Check the narrowest (most severe) band first."
+    ]
+  }
+}

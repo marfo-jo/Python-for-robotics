@@ -1,0 +1,143 @@
+{
+  "id": "m00.l11",
+  "title": "0.11 Exceptions and reading tracebacks",
+  "minutes": 80,
+  "objectives": [
+    "Read a traceback bottom-up: the last line gives the type and message, the last solution.py frame shows where it happened, and the frames above show how it got there",
+    "Catch specific exceptions (ValueError, IndexError) with try/except, keep try blocks small, and explain why a bare except is dangerous",
+    "Raise your own ValueError with a clear message, and convert an IndexError into a ValueError for the caller",
+    "Use else for the success path and finally for code that must always run"
+  ],
+  "skills": {
+    "python": 3,
+    "softeng": 1
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: a driver that must survive corrupted and no-fix $GPGGA sentences without crashing the ROS node; Lab 4: cleaning bad lines out of recorded dead-reckoning logs"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "Catching ValueError on real fields",
+      "file": "examples/ex1.py",
+      "expectedOutput": "'08'    -> 8\n''      -> not a whole number, skipped\n'x9'    -> not a whole number, skipped\n' 12 '  -> 12\n'7.0'   -> not a whole number, skipped\nthe loop finished: one bad field didn't stop the program"
+    },
+    {
+      "id": "ex2",
+      "title": "ValueError vs IndexError",
+      "file": "examples/ex2.py",
+      "expectedOutput": "satellites: 9\nfield 7 is not a number\nonly 3 fields, no field 7\nskipped: ValueError\nskipped: IndexError"
+    },
+    {
+      "id": "ex3",
+      "title": "Raising your own ValueError",
+      "file": "examples/ex3.py",
+      "expectedOutput": "quality 1\nquality 4\nrejected '': fix quality field is empty\nrejected '9': fix quality must be 0 to 8, got 9\n2"
+    },
+    {
+      "id": "ex4",
+      "title": "A robust altitude parser over a messy log",
+      "file": "examples/ex4.py",
+      "expectedOutput": "line 2: skipped (not an NMEA sentence)\nline 4: skipped (altitude field is empty (no fix))\nline 5: skipped (too few fields (4))\nchecked 5, kept 2, mean altitude 10.30 m"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "A truncated sentence reaches this code. What happens?",
+      "code": "fields = \"$GPGGA,123519\".split(\",\")\ntry:\n    sats = int(fields[7])\nexcept ValueError:\n    sats = 0\nprint(sats)",
+      "choices": [
+        "0",
+        "IndexError",
+        "ValueError",
+        "None"
+      ],
+      "answer": 1,
+      "why": "The list has only 2 items, so fields[7] raises IndexError before int() is even called. An except clause only catches the types it names, and except ValueError doesn't name IndexError, so the exception goes straight past it and stops the program. Read the last line of the traceback to find the REAL type, then catch that (or both, with except (ValueError, IndexError))."
+    },
+    {
+      "id": "p2",
+      "question": "What does this print, in what order?",
+      "code": "for text in [\"8\", \"x\"]:\n    try:\n        n = int(text)\n    except ValueError:\n        print(\"bad\", text)\n    else:\n        print(\"ok\", n)\n    finally:\n        print(\"done\")",
+      "choices": [
+        "ok 8\ndone\nbad x\ndone",
+        "ok 8\nbad x\ndone",
+        "ok 8\ndone\nbad x",
+        "ok 8\ndone\nbad x\ndone\nValueError"
+      ],
+      "answer": 0,
+      "why": "else runs only when the try block raised nothing (the '8' pass), except runs only when it raised ValueError (the 'x' pass), and finally runs on EVERY pass, after whichever of the two ran. The ValueError was caught, so nothing escapes and the loop finishes normally."
+    },
+    {
+      "id": "p3",
+      "question": "What happens?",
+      "code": "def check_quality(q):\n    if q == 0:\n        raise ValueError(\"no fix\")\n    return q\n\nprint(check_quality(1))\nprint(check_quality(0))\nprint(\"after\")",
+      "choices": [
+        "1\n0\nafter",
+        "1\nno fix\nafter",
+        "1\nValueError",
+        "ValueError"
+      ],
+      "answer": 2,
+      "why": "The first call returns 1, which is printed. The second call raises ValueError('no fix'). raise does not print the message and carry on: it stops the function AND, because nothing catches it, stops the whole program. So print('after') never runs. The message only appears in the traceback's last line: ValueError: no fix."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: a crash, frame by frame",
+      "props": {
+        "code": "def to_degrees(text):\n    return int(text[:2]) + float(text[2:]) / 60\n\n\ndef parse_lat(sentence):\n    fields = sentence.split(\",\")\n    return to_degrees(fields[2])\n\n\nprint(parse_lat(\"$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\"))\nprint(parse_lat(\"$GPGGA,,,,,,0,00,,,M,,M,,*66\"))\n",
+        "expectError": true
+      },
+      "notice": "Watch the call stack: <module> → parse_lat → to_degrees. On the second call, text is '' (the empty latitude field), and int('') raises ValueError. The traceback lists exactly the frames that were on the call stack at that moment, oldest at the top, newest at the bottom.",
+      "predictFirst": {
+        "question": "The first call works. On the second call (a no-fix sentence), which function will be running when it fails, what will the call stack be, and what is the error type?",
+        "reveal": "It fails inside to_degrees, at line 2, with the stack <module> → parse_lat → to_degrees. fields[2] is '' for a no-fix sentence, so int('') raises ValueError. The traceback's last solution.py line is line 2, but the real decision (what to do with no fix) belongs in parse_lat or its caller."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "tracer",
+      "title": "Trace: try / except / else / finally",
+      "props": {
+        "code": "good = []\nfor text in [\"8\", \"x\", \"12\"]:\n    try:\n        n = int(text)\n    except ValueError:\n        print(\"bad\", repr(text))\n    else:\n        good.append(n)\n    finally:\n        print(\"checked\", repr(text))\nprint(good)\n"
+      },
+      "notice": "For '8' and '12', the try block finishes, so else runs. For 'x', int() raises and execution jumps straight into except: the else is skipped. finally runs on every pass. good only ever receives values from the else branch."
+    }
+  ],
+  "challenge": {
+    "task": "Write parse_gga(sentence) that returns {'time','quality','sats','hdop','alt'} for a valid GGA sentence and raises ValueError with specific messages ('not an NMEA sentence', 'checksum mismatch', 'not a GGA sentence', 'too few fields', 'no fix') for bad input; and parse_fixes(lines) that returns (fixes, errors) with (line_number, message) for each bad line, skipping blanks and catching only ValueError.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "state changed inside try before the failing line (count includes rejected lines)",
+    "report": "Lab 4 data-quality table: \"mean_satellites says our logs average 6.3 satellites, but every single GGA fix in the file shows 9 or 10. The logs also contain the receiver's boot banner and some no-fix sentences, which are supposed to be ignored.\" Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: how do you read a Python traceback, and in what order? Then explain how your parse_gga and parse_fixes handle bad input: why parse_gga raises instead of returning None, why it turns an IndexError into a ValueError, and why parse_fixes catches only ValueError instead of using a bare except.",
+    "rubric": [
+      "Reads bottom-up: the last line is the exception type and message, the last solution.py frame is the line that was running, and the frames above are the chain of calls that led there (the real cause may be earlier)",
+      "Explains that raising ValueError with a specific message makes the failure impossible to ignore and tells the caller what was wrong, and that converting IndexError to ValueError gives callers one type to catch for all bad input",
+      "Explains that catching only ValueError lets unexpected errors (real bugs, like a None in the list) still crash loudly, while a bare except would hide them and produce wrong results"
+    ],
+    "minWords": 60
+  },
+  "hints": {
+    "challenge": [
+      "Go through the message table in order: each row is one check, and each check either passes or raises. Which check can only be done after you split the sentence? Where could an IndexError come from, and how do you turn it into your own ValueError? For parse_fixes: what does enumerate give you, and what kind of exception should the except name?",
+      "parse_gga: strip, find '*', and raise 'not an NMEA sentence' if there's no '$' at the start or no '*'. Then raise on a failed checksum, then on sentence[3:6] not being 'GGA'. Split the part before '*' at commas. Inside a small try, pull out fields 1, 6, 7, 8, 9; except IndexError, raise ValueError('too few fields'). Convert the quality and raise 'no fix' if it's 0, THEN convert the rest and return the dict. parse_fixes: loop with enumerate starting at 1, skip lines that are blank after strip, try parse_gga, and on ValueError as err append (number, str(err)).",
+      "parse_gga(s): s = stripped s; star = position of '*'. If s doesn't start with '$' or star is -1: raise a ValueError saying 'not an NMEA sentence'. If checksum is wrong: raise a ValueError saying 'checksum mismatch'. If characters 3 to 5 aren't 'GGA': raise a ValueError saying 'not a GGA sentence'. fields = (s before star) split at ','. try: get fields 1, 6, 7, 8, 9. except IndexError: raise a ValueError saying 'too few fields'. quality = int(field 6); if quality is 0: raise a ValueError saying 'no fix'. Return the dict with time, quality, int(sats), float(hdop), float(alt). parse_fixes(lines): fixes = []; errors = []; for number, line in enumerate(lines) counting from 1: if stripped line is empty: skip; try: add parse_gga(line) to fixes; if a ValueError is raised: add (number, its message) to errors. Return (fixes, errors)."
+    ],
+    "bug": [
+      "Trace the junk line by hand (or in the tracer). Which lines inside the try block run before the exception is raised? What has already changed by the time the except runs?",
+      "count += 1 runs BEFORE int(fields[7]) can fail, so every rejected line is still counted and the mean is too low. Do the risky conversion first, and only update total and count after it succeeds (for example, in the code after the try/except, or in an else block)."
+    ]
+  }
+}

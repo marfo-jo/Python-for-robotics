@@ -1,0 +1,141 @@
+{
+  "id": "m00.l09",
+  "title": "0.9 f-strings and unit conversion",
+  "minutes": 75,
+  "objectives": [
+    "Convert NMEA ddmm.mmmm latitude and dddmm.mmmm longitude to signed decimal degrees, with S and W negative",
+    "Format numbers with f-strings: fixed precision, width, alignment, zero-padding, and units (f\"{lat:.6f}°\")",
+    "Choose correctly between int(), float(), and round(), and explain truncation, round-half-to-even, and float error",
+    "Explain why 6 decimal places of a degree is about 0.1 m, and why minutes must be divided by 60, not 100"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: converting $GPGGA latitude/longitude to decimal degrees (and then UTM) in your GPS driver; Lab 4: plotting the GPS track against the dead-reckoning track"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "f-string format specs",
+      "file": "examples/ex1.py",
+      "expectedOutput": "sats: 8\nsats: 8\nGPGGA: 8 satellites, HDOP 0.9\naltitude 545.40 m\naltitude 545 m\n[   8]\n[08]\n[GP  ]\n[  545.40]\n-3.5 +3.5\n545.4 m = 1789.4 ft"
+    },
+    {
+      "id": "ex2",
+      "title": "int(), float(), round(), and float error",
+      "file": "examples/ex2.py",
+      "expectedOutput": "8\n545.4\n4808.038\n4807\n-3\n4 -4\n0 2 2\n48.1173\n7.037999999999556\n7.0380\nFalse\nTrue"
+    },
+    {
+      "id": "ex3",
+      "title": "A $GPGGA fix in signed decimal degrees",
+      "file": "examples/ex3.py",
+      "expectedOutput": "42 20.0101\n71 5.66\nlat = 42.333502°  lon = -71.094333°\n42.333502°N, 71.094333°W\nwrong: 42.200101°, off by 14.9 km"
+    },
+    {
+      "id": "ex4",
+      "title": "Why 6 decimal places is about 0.1 m",
+      "file": "examples/ex4.py",
+      "expectedOutput": "1° of longitude at 42.34°N is 82,283 m\n\nplaces | step (deg) | north-south |   east-west\n     1 |  0.1000000 | 11132.000 m |  8228.341 m\n     2 |  0.0100000 |  1113.200 m |   822.834 m\n     3 |  0.0010000 |   111.320 m |    82.283 m\n     4 |  0.0001000 |    11.132 m |     8.228 m\n     5 |  0.0000100 |     1.113 m |     0.823 m\n     6 |  0.0000010 |     0.111 m |     0.082 m\n     7 |  0.0000001 |     0.011 m |     0.008 m"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "The latitude field is the text '4807.038'. What happens?",
+      "code": "lat_text = \"4807.038\"\nprint(int(lat_text))",
+      "choices": [
+        "4807",
+        "4807.038",
+        "48",
+        "ValueError"
+      ],
+      "answer": 3,
+      "why": "int() on a STRING only accepts text that is a whole number. '4807.038' has a decimal point, so int() raises ValueError: invalid literal for int(). int() only chops decimals when you give it a float: int(float(lat_text)) is 4807. That's two different jobs: parsing text, and truncating a number."
+    },
+    {
+      "id": "p2",
+      "question": "Two ways to convert the same latitude. What does this print?",
+      "code": "lat_text = \"4230.0000\"\nprint(float(lat_text) / 100)\nprint(int(lat_text[:2]) + float(lat_text[2:]) / 60)",
+      "choices": [
+        "42.3\n42.3",
+        "42.5\n42.5",
+        "42.3\n42.5",
+        "42.5\n42.3"
+      ],
+      "answer": 2,
+      "why": "The field means 42 degrees and 30 MINUTES. Thirty minutes is half a degree, so the right answer is 42.5. Dividing the whole field by 100 treats the minutes as hundredths of a degree and gives 42.3, which is 0.2° (about 22 km) too far south. Both lines run without error, which is exactly why this bug survives."
+    },
+    {
+      "id": "p3",
+      "question": "What does this print? Watch the width and the precision.",
+      "code": "lat = 42.35205\nprint(f\"[{lat:.2f}][{lat:8.3f}]\")",
+      "choices": [
+        "[42.35][42.352]",
+        "[42.35][  42.352]",
+        "[42.35][42.352  ]",
+        "[42.35][42.35205]"
+      ],
+      "answer": 1,
+      "why": ".2f keeps exactly 2 decimals. 8.3f means 3 decimals in a field at least 8 characters wide, and the width counts the digits AND the decimal point: '42.352' is 6 characters, so 2 spaces are added. Numbers are right-aligned by default (text is left-aligned), so the spaces go in front. The precision rounds the value for display; it never prints the full 42.35205."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: '07105.6600' W to decimal degrees",
+      "props": {
+        "code": "def to_decimal(text, hemi, deg_digits):\n    degrees = int(text[:deg_digits])\n    minutes = float(text[deg_digits:])\n    value = degrees + minutes / 60\n    if hemi == \"S\" or hemi == \"W\":\n        value = -value\n    return value\n\n\nlon = to_decimal(\"07105.6600\", \"W\", 3)\nprint(f\"{lon:.6f}°\")\n"
+      },
+      "notice": "degrees becomes 71: int('071') ignores the leading zero. minutes is the float 5.66, and minutes / 60 is only 0.0943, a small correction. value is positive until the hemisphere check flips it. The sign is applied once, at the end, to the whole value (not just the degrees).",
+      "predictFirst": {
+        "question": "For '07105.6600' with 3 degree digits: what will degrees and minutes be? Will value be positive or negative just before the return, and what gets printed?",
+        "reveal": "degrees = 71, minutes = 5.66, value = 71 + 5.66/60 = 71.094333..., then the W flips it to -71.094333. It prints -71.094333°."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "nmea-fields",
+      "title": "Where the position fields are",
+      "props": {
+        "sentence": "$GPGGA,153012.00,4220.0101,N,07105.6600,W,1,09,0.9,10.2,M,-33.1,M,,*62"
+      },
+      "notice": "Field 2 is the latitude (ddmm.mmmm), field 3 its hemisphere, field 4 the longitude (dddmm.mmmm, one extra digit), field 5 its hemisphere. The numbers are always positive; the letters carry the sign."
+    }
+  ],
+  "challenge": {
+    "task": "Write nmea_to_decimal(value, hemisphere) that converts NMEA ddmm.mmmm or dddmm.mmmm text to signed decimal degrees (S and W negative, None for empty fields), and format_position(lat, lon) that returns a label like '42.333502°N, 71.094333°W' with exactly 6 decimals.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "unit mix-up (minutes treated as hundredths of a degree)",
+    "report": "Lab 4 dead-reckoning report: \"We plotted the GPS track on top of the wheel-odometry track. The shape matches, but the whole GPS track sits about 16 km south of where we drove, and the offset changes as we move. West longitudes do come out negative, so the hemisphere handling seems fine.\" gga_to_latlon is supposed to return (lat, lon) in signed decimal degrees. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: what do the parts of an NMEA latitude like 4220.0101 mean, how do you turn it into signed decimal degrees, and why is dividing the whole field by 100 wrong even though it gives a believable number? Also explain why we print positions with 6 decimal places.",
+    "rubric": [
+      "Explains that the field is degrees followed by minutes (2 digits before the decimal point plus the fraction), with 60 minutes per degree, so the minutes must be divided by 60",
+      "Explains that the sign comes from the hemisphere letter (S and W negative) and that dividing by 100 treats minutes as hundredths, an error of up to about 0.4° (tens of km) that never crashes",
+      "Explains that 1° of latitude is about 111 km, so the 6th decimal place is about 0.1 m, and that formatting (f\"{x:.6f}\") changes the display while round() changes the value"
+    ],
+    "minWords": 50
+  },
+  "hints": {
+    "challenge": [
+      "Where do the minutes start? Look at where the decimal point is in '4220.0101' and in '07105.6600'. The minutes are always the same number of digits before it. Then: which hemisphere letters mean negative? And what should happen before any of that if a field is empty?",
+      "nmea_to_decimal: return None first if either argument is ''. Find the index of '.' with find(); the degrees are everything before (dot - 2) and the minutes are everything from (dot - 2) on. Convert both, add minutes / 60, and negate for 'S' or 'W'. format_position: choose the letter with a conditional, then use abs() and the .6f format spec in one f-string.",
+      "nmea_to_decimal(value, hemisphere): if value is empty or hemisphere is empty: return None. dot = position of '.' in value. degrees = int(value up to dot - 2). minutes = float(value from dot - 2 on). result = degrees + minutes / 60. If hemisphere is 'S' or 'W': result = -result. Return result. format_position(lat, lon): ns is 'N' when lat >= 0, otherwise 'S'. ew is 'E' when lon >= 0, otherwise 'W'. Return the text: abs(lat) with 6 decimals, '°', ns, ', ', abs(lon) with 6 decimals, '°', ew."
+    ],
+    "bug": [
+      "How many minutes are in one degree? Now look at what each minutes value is divided by.",
+      "The code reads the minutes correctly but converts them as if they were hundredths of a degree. Minutes must be divided by 60, for both latitude and longitude."
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+setup(): runs once
+loop(): scan 1
+loop(): scan 2
+loop(): scan 3
+loop(): scan 4
+loop(): scan 5
+main(): stopped after 5 scans (a real Arduino never stops)

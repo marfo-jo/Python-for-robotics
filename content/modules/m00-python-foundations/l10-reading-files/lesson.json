@@ -1,0 +1,132 @@
+{
+  "id": "m00.l10",
+  "title": "0.10 Reading files",
+  "minutes": 75,
+  "objectives": [
+    "Open a text file with `with open(path, encoding='utf-8')` and explain why `with` guarantees the file is closed",
+    "Loop over a file line by line, strip each line, skip blank lines, and explain why a second loop over the same file gets nothing",
+    "Validate every line of a messy GPS log (junk, blank lines, bad checksums, a truncated last line) and count the errors",
+    "Explain relative vs absolute paths and the current working directory, and write functions that take the path as a parameter"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: analyzing a recorded GPS log after the drive; Lab 4: loading recorded GPS and IMU logs for dead reckoning"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "Looping over a file",
+      "file": "examples/ex1.py",
+      "expectedOutput": "71 ',*62\\n'\n71 ',*69\\n'\n70 ',,*65'\nTrue"
+    },
+    {
+      "id": "ex2",
+      "title": "read(), readlines(), and strip-and-skip",
+      "file": "examples/ex2.py",
+      "expectedOutput": "145 '*71\\n'\n4 '\\n' '   \\n'\n$GPGGA 70\n$GPRMC 68\n2 sentences, 2 blank lines"
+    },
+    {
+      "id": "ex3",
+      "title": "A messy field log, shape-checked line by line",
+      "file": "examples/ex3.py",
+      "expectedOutput": "line 1: rejected ...'M8N ROM 2.01'\nline 7: rejected ...'5.00,4220.01'\n4 good sentences, 2 errors, 7 lines read\n$GPGGA,153014.00 <- corrupted, but it LOOKS fine: only a checksum catches it"
+    },
+    {
+      "id": "ex4",
+      "title": "Relative paths and sub-folders",
+      "file": "examples/ex4.py",
+      "expectedOutput": "False\nTrue\nlogs run_0428.txt\nTrue\nFalse\n$GPGGA,,,,,,0,00,,,M,,M,,*66\nno such file: logs/run_9999.txt"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "Each sentence written here is 6 characters long. What does the reading loop print?",
+      "code": "with open(\"t.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"$GPGGA\\n$GPRMC\\n\")\n\nwith open(\"t.txt\", encoding=\"utf-8\") as f:\n    for line in f:\n        print(len(line))",
+      "choices": [
+        "6\n6",
+        "7\n7",
+        "7\n7\n0",
+        "6\n7"
+      ],
+      "answer": 1,
+      "why": "Every line you get from a file keeps its newline character, so each line is 6 visible characters plus '\\n' = 7. The file ends right after the second '\\n', so there is no third, empty line: the loop runs exactly twice. That invisible '\\n' is why you always strip() before comparing or slicing from the end."
+    },
+    {
+      "id": "p2",
+      "question": "What does this print?",
+      "code": "with open(\"t.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"$GPGGA\\n$GPRMC\\n$GPGSV\\n\")\n\nwith open(\"t.txt\", encoding=\"utf-8\") as f:\n    first = len(f.readlines())\n    second = len(f.readlines())\nprint(first, second)",
+      "choices": [
+        "3 3",
+        "3 0",
+        "0 3",
+        "6 0"
+      ],
+      "answer": 1,
+      "why": "A file object has a read position, like a tape head. The first readlines() reads all 3 lines and leaves the position at the end of the file. The second readlines() starts at the end, finds nothing, and returns an empty list. There is no error, which makes this bug hard to spot. Read once and keep the list, or do all the work in one loop."
+    },
+    {
+      "id": "p3",
+      "question": "The read happens after the with-block. What happens?",
+      "code": "with open(\"t.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"$GPGGA\\n\")\n\nwith open(\"t.txt\", encoding=\"utf-8\") as f:\n    pass\nprint(f.read())",
+      "choices": [
+        "$GPGGA",
+        "FileNotFoundError",
+        "ValueError",
+        "None"
+      ],
+      "answer": 2,
+      "why": "The with-block closed the file when it ended. The name f still exists, but it now refers to a CLOSED file, and reading a closed file raises ValueError: I/O operation on closed file. The file is still on disk (so it isn't FileNotFoundError); you just have to do your reading inside the with-block."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: the strip-and-skip loop",
+      "props": {
+        "code": "import io\n\n# io.StringIO behaves like an open text file, but lives in memory.\nf = io.StringIO(\"$GPGGA,,,,,,0,00,,,M,,M,,*66\\n\\n$GPGGA,153015.00,4220.01\")\ncount = 0\nblank = 0\nfor line in f:\n    line = line.strip()\n    if line == \"\":\n        blank += 1\n        continue\n    count += 1\nprint(count, blank)\n"
+      },
+      "notice": "Watch line in the variables table: on each pass it first holds the raw line WITH '\\n', then the stripped copy. The middle line becomes '' and takes the continue path. The last line has no '\\n' at all (the file was cut off), and this loop happily counts it, because it only skips blanks and never validates. That's why the challenge also checks the checksum.",
+      "predictFirst": {
+        "question": "How many times will the loop body run? What will line hold on the first pass before and after strip()? What gets printed at the end?",
+        "reveal": "3 passes, one per line. First pass: '$GPGGA,,,,,,0,00,,,M,,M,,*66\\n', then the same without the '\\n'. The blank line adds 1 to blank. It prints 2 1: the truncated line is counted as a sentence because nothing checks it."
+      }
+    }
+  ],
+  "challenge": {
+    "task": "Write load_sentences(path) that opens a GPS log with `with open(path, encoding='utf-8')`, returns (sentences, errors): the stripped, checksum-valid NMEA sentences in file order, and the count of non-blank lines rejected (junk, bad checksum, truncated). Blank lines are skipped and are not errors.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "file read twice (exhausted file iterator)",
+    "report": "Lab 4 analysis script: \"The summary for every log file says 'lines: 1184, GGA fixes: 0'. Opening the same file in Notepad shows hundreds of $GPGGA lines, so the receiver definitely logged fixes. The line count looks right.\" log_summary(path) should return (non-blank lines, GGA sentences). Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: walk through how your load_sentences reads a log file. Why do you use `with`, why must every line be stripped, how does your code tell a blank line from a bad one, and why does a truncated last line end up counted as an error? Finally, why is the path a parameter instead of a file name written inside the function?",
+    "rubric": [
+      "Explains that `with` closes the file automatically when the block ends (even on an error), and that each line from the loop keeps its '\\n' so it must be stripped (and the result stored)",
+      "Explains that a stripped blank line is '' and is skipped with continue, while junk, corrupted, and truncated lines fail the checksum check (no '$', no '*', or a mismatched checksum) and are counted",
+      "Explains that relative paths depend on the current working directory, so taking the path as a parameter lets the caller (or the tests) point the function at any file"
+    ],
+    "minWords": 50
+  },
+  "hints": {
+    "challenge": [
+      "Start from the standard log-reading loop in the lesson. What does a blank line look like after strip()? And which single check rejects a boot banner, a corrupted sentence, AND a truncated line?",
+      "Make an empty list and an error counter. Open the file with `with` and encoding='utf-8', loop over it, strip each line, and `continue` on ''. If the checksum is valid, append the stripped line; otherwise add 1 to the errors. After the with-block, return both as a tuple. For checksum_ok: find the '*', check the line starts with '$' and a '*' exists, XOR every character between them, and compare that (as 2 uppercase hex digits) with the text after the '*' uppercased.",
+      "load_sentences(path): sentences = empty list; errors = 0. With the file at path open for reading (utf-8) as f: for each line in f: line = stripped line; if line is empty: skip to the next line; if checksum_ok(line): add line to sentences; else: errors = errors + 1. Return (sentences, errors). checksum_ok(s): star = position of '*' in s; if s doesn't start with '$' or star is -1: return False; x = 0; for each character between index 1 and star: x = x XOR its code; return (x as 2-digit uppercase hex) == (s after star, uppercased)."
+    ],
+    "bug": [
+      "Put a print(line) inside the second loop and run it. How many times does it print? Where is the file's read position after the first loop finishes?",
+      "The first loop reads the file to the end, so the second loop over the same file object gets no lines at all. Count both things in ONE loop (or save the lines in a list first and loop over the list twice)."
+    ]
+  }
+}

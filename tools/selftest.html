@@ -55,8 +55,75 @@ async function checkLesson(mod, lid) {
   }
 }
 
+// Load the real app in an iframe and check that key pages render without errors.
+async function checkUI() {
+  const frame = document.createElement("iframe");
+  frame.style.cssText = "width:1200px;height:900px";
+  document.body.append(frame);
+  const errors = [];
+  const visit = (hash, ready) => new Promise((resolve) => {
+    frame.onload = () => {
+      const win = frame.contentWindow;
+      win.addEventListener("error", (e) => errors.push(`${hash}: ${e.message}`));
+      win.addEventListener("unhandledrejection", (e) => errors.push(`${hash}: ${e.reason}`));
+      const t0 = Date.now();
+      const poll = setInterval(() => {
+        const doc = frame.contentDocument;
+        if (ready(doc) || Date.now() - t0 > 20000) { clearInterval(poll); resolve(doc); }
+      }, 250);
+    };
+    // A unique query forces a real navigation; a hash-only change wouldn't fire onload.
+    frame.src = `../index.html?visit=${Math.random().toString(36).slice(2)}${hash}`;
+  });
+  const routes = [
+    ["#/", (d) => d.querySelector(".radar"), "dashboard renders with radar"],
+    ["#/m/m00", (d) => d.querySelector(".lesson-list li"), "module page lists lessons"],
+    ["#/l/m00/m00.l01", (d) => d.querySelectorAll(".CodeMirror").length >= 8 && d.querySelector(".mastery h2"), "lesson 0.1 renders all embeds"],
+    ["#/review", (d) => d.querySelector("main h1"), "review page renders"],
+    ["#/sim", (d) => d.querySelector(".sim-canvas"), "simulator page renders"],
+    ["#/settings", (d) => d.querySelector("main h1"), "settings page renders"],
+    ["#/t/sprints", (d) => d.querySelector("main h1"), "sprints track index renders"],
+  ];
+  for (const [hash, ready, label] of routes) {
+    const doc = await visit(hash, ready);
+    const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
+    log(Boolean(ready(doc)) && !bad, `UI ${label}${bad ? " :: " + bad : ""}`);
+  }
+  // Seed progress so every lesson is unlocked, then render each lesson page and
+  // the quiz / project / No Hands pages.
+  const mod = await json("../content/modules/m00-python-foundations/module.json");
+  const lessons = {};
+  for (const id of mod.lessons) lessons[id] = { challengePassed: true, bugFixed: true, explainDone: true, predict: {}, attempts: 0, code: {}, masteredAt: "2026-10-28T00:00:00Z" };
+  localStorage.setItem("pfr.progress.v1", JSON.stringify({ version: 1, lessons, quizzes: {}, noHands: {}, projects: {}, tracks: {}, review: {}, activity: {}, streak: { best: 0 }, settings: { theme: "auto" } }));
+  for (const id of mod.lessons) {
+    const doc = await visit(`#/l/m00/${id}`, (d) => d.querySelector(".mastery h2") && d.querySelectorAll(".exercise").length >= 2);
+    const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
+    const embedsEmpty = [...doc.querySelectorAll(".embed")].filter((e) => !e.children.length).length;
+    log(Boolean(doc.querySelector(".mastery h2")) && !bad && !embedsEmpty, `UI ${id} renders (${doc.querySelectorAll(".CodeMirror").length} editors)${bad ? " :: " + bad : ""}${embedsEmpty ? ` :: ${embedsEmpty} empty embeds` : ""}`);
+  }
+  for (const [hash, ready, label] of [
+    ["#/quiz/m00", (d) => d.querySelectorAll(".quiz fieldset").length === 15, "mastery quiz draws 15 questions"],
+    ["#/project/m00", (d) => d.querySelector(".exercise"), "project page renders"],
+    ["#/nohands/m00", (d) => d.querySelector(".timer"), "No Hands page renders"],
+    ["#/m/m00", (d) => d.querySelector(".bridge-robots") && d.querySelector(".bridge-cpp"), "module page shows both Bridge boxes"],
+  ]) {
+    const doc = await visit(hash, ready);
+    const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
+    log(Boolean(ready(doc)) && !bad, `UI ${label}${bad ? " :: " + bad : ""}`);
+  }
+  localStorage.clear();
+  log(errors.length === 0, `UI no uncaught errors ${errors.join(" ; ")}`);
+  frame.remove();
+}
+
 async function main() {
   const params = new URLSearchParams(location.search);
+  if (params.get("ui") === "1") {
+    try { localStorage.clear(); } catch { /* fresh-learner view */ }
+    await checkUI();
+    lines.push(`\n${failures === 0 ? "SELFTEST PASS" : `SELFTEST FAIL (${failures})`}`);
+    return finish();
+  }
   const t0 = performance.now();
   const hello = await runCode("print('hello from pyodide')");
   log(hello.stdout.trim() === "hello from pyodide", `pyodide boots (${((performance.now() - t0) / 1000).toFixed(1)}s)`);
@@ -88,8 +155,39 @@ async function main() {
       log(false, `${lid}: ${e.message}`);
     }
   }
+  if (!only) await checkModuleExtras(mod);
   lines.push(`\n${failures === 0 ? "SELFTEST PASS" : `SELFTEST FAIL (${failures})`}`);
   finish();
+}
+
+// Project, No Hands, and runnable quiz items under Pyodide (mirrors verify.py).
+async function checkModuleExtras(mod) {
+  const base = "../content/modules/m00-python-foundations";
+  for (const [name, prefix, testName] of [["project", "project", "test_project.py"], ["noHands", "nohands", "test_nohands.py"]]) {
+    const cfg = mod[name];
+    if (!cfg) continue;
+    const extraFiles = {};
+    for (const [dest, src] of Object.entries(cfg.dataFiles || {})) extraFiles[dest] = await text(`../${src}`);
+    const tests = await text(`${base}/${cfg.tests}`);
+    const opts = { testName, extraFiles, timeoutMs: 30000 };
+    const starter = await runTests(await text(`${base}/${cfg.starter}`), tests, opts);
+    log(!starter.ok, `m00 ${name} starter fails (${starter.passed}/${starter.total})`);
+    const refPath = `../verification/m00/${prefix}.py`;
+    if (await exists(refPath)) {
+      const ref = await runTests(await text(refPath), tests, opts);
+      log(ref.ok, `m00 ${name} reference passes (${ref.passed}/${ref.total}) ${ref.collectErrors?.join(" ") || ""}`);
+    } else log(false, `m00 ${name} reference missing`);
+  }
+  const quiz = await json(`${base}/${mod.quiz}`);
+  let checked = 0;
+  for (const q of quiz.pool.filter((x) => x.code && x.checkOutput)) {
+    const res = await runCode(q.code);
+    const actual = res.error ? (norm(res.stdout) ? norm(res.stdout) + "\n" : "") + res.error.type : norm(res.stdout);
+    const ok = actual === norm(q.choices[q.answer]);
+    if (!ok) log(false, `m00 quiz ${q.id} (got ${JSON.stringify(actual)})`);
+    checked += 1;
+  }
+  log(true, `m00 quiz: ${checked} runnable items checked in Pyodide`);
 }
 
 function finish() {

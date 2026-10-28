@@ -1,0 +1,12 @@
+sizeof(char) = 1
+sizeof(short) = 2
+sizeof(int) = 4
+sizeof(long) = 8
+sizeof(long long) = 8
+sizeof(float) = 4
+sizeof(double) = 8
+sizeof(uint8_t) = 1
+sizeof(int16_t) = 2
+sizeof(uint32_t) = 4
+INT_MAX = 2147483647
+LONG_MAX = 9223372036854775807

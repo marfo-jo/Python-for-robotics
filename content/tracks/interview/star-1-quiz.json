@@ -1,0 +1,104 @@
+{
+  "title": "STAR 1 check: structure and strong answers",
+  "items": [
+    {
+      "id": "q1",
+      "q": "In a 90-second STAR answer, which part should take the most time?",
+      "choices": ["Situation", "Task", "Action", "Result"],
+      "answer": 2,
+      "why": "The Action is what the interviewer is scoring: your reasoning, your tools, your decisions. Aim for about half the answer. Long Situations are the most common way candidates run out of time."
+    },
+    {
+      "id": "q2",
+      "q": "Which Result is strongest?",
+      "choices": [
+        "\"And then it worked.\"",
+        "\"The machine was fixed and everyone was happy.\"",
+        "\"The trips stopped. It didn't recur in the 3 months I tracked it, and I added the check to the monthly PM.\"",
+        "\"We fixed it.\""
+      ],
+      "answer": 2,
+      "why": "It has a measurable outcome (no recurrence over a stated period) and a prevention step. The others don't tell the interviewer how you know it was fixed or what you changed."
+    },
+    {
+      "id": "q3",
+      "q": "Which Action sentence shows structured diagnosis best?",
+      "choices": [
+        "\"I tried a few things until it worked.\"",
+        "\"I replaced the sensor, then the cable, then the input card.\"",
+        "\"I measured 24 V at the terminal block but 0 V at the sensor connector, which ruled out the power supply and pointed to the cable run.\"",
+        "\"I used my experience to figure it out.\""
+      ],
+      "answer": 2,
+      "why": "It names a measurement, what it showed, what it ruled out, and the next step. That's hypothesis testing. The second option is a parts cannon: it may fix the problem but it doesn't show diagnosis."
+    },
+    {
+      "id": "q4",
+      "q": "You don't remember the exact downtime. What should you say?",
+      "choices": [
+        "Make up a precise number; it sounds more professional",
+        "Give an honest estimate marked as one, such as \"about 30 to 45 minutes per stop\"",
+        "Leave the result out entirely",
+        "Say \"a lot of downtime\""
+      ],
+      "answer": 1,
+      "why": "An honest, marked estimate is credible and defensible. A made-up precise number collapses under a follow-up question, and once one number is doubted, the whole story is."
+    },
+    {
+      "id": "q5",
+      "q": "Your supervisor ordered the replacement part and you did the diagnosis and repair. Which phrasing is right?",
+      "choices": [
+        "\"I ordered the part and fixed it.\"",
+        "\"We fixed it.\"",
+        "\"I traced it to the drive's encoder cable; my supervisor approved and ordered the part, and I replaced it and verified it over the next shift.\"",
+        "Leave the supervisor out so the story is about you"
+      ],
+      "answer": 2,
+      "why": "It claims exactly what you did, credits the other person precisely, and still makes your role clear. \"We\" hides your contribution; claiming the order is inaccurate."
+    },
+    {
+      "id": "q6",
+      "q": "Your story is full of PLC addresses and part numbers, and the interviewer is a software engineer. Best fix?",
+      "choices": [
+        "Keep it: jargon proves expertise",
+        "Name the tool, then say in plain words what it told you; go deeper only if asked",
+        "Remove all technical content",
+        "Switch to a non-technical story"
+      ],
+      "answer": 1,
+      "why": "Interviewers score clarity as well as depth. \"I used the PLC's online view to see whether the controller saw the sensor; it didn't\" is clear to anyone, and still invites a deeper follow-up."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Tell me about a time you diagnosed a difficult equipment failure.",
+      "rubric": [
+        "Brief, clear Situation and Task (under about 30 seconds) with the impact of the failure stated",
+        "At least three distinct diagnostic steps, each with a reason, including at least one real measurement or data source and what it ruled out",
+        "Identifies a root cause (not only the part that was replaced) and explains how the fix was verified",
+        "Result is concrete and honest, ideally quantified (downtime, recurrence, cost), with a prevention or follow-up step",
+        "Clear about own role vs others, no blame, and ends with a lesson or a bridge to robotics or embedded debugging"
+      ]
+    },
+    {
+      "q": "Describe a problem where your first hypothesis was wrong. How did you realize it, and what did you do next?",
+      "rubric": [
+        "States the initial hypothesis and why it was reasonable at the time",
+        "Describes the specific test or observation that disproved it",
+        "Shows how the new evidence changed the next step (narrowing the problem, not restarting at random)",
+        "Reaches a verified root cause and a concrete result",
+        "Reflects honestly on what they'd do differently, without defensiveness"
+      ]
+    },
+    {
+      "q": "Walk me through how you troubleshoot a system you've never seen before.",
+      "rubric": [
+        "Starts with safety and with gathering information: symptoms, when it happens, recent changes, documentation, logs",
+        "Describes a systematic method, such as splitting the system in half or working from power to signal to logic, rather than guessing",
+        "Mentions measuring before replacing parts, and changing one thing at a time",
+        "Mentions verifying the fix under the conditions that caused the failure, and documenting it",
+        "Backs the method with a short real example and connects it to robotics or embedded systems"
+      ]
+    }
+  ]
+}

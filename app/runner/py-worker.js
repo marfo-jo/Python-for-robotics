@@ -43,9 +43,18 @@ const handlers = {
   async init() {
     return { version: pyodide.version };
   },
-  async run({ code }) {
+  // Download packages before the timed run, so a slow first `import numpy`
+  // isn't mistaken for an infinite loop.
+  async prepare({ sources, needPytest }) {
+    const errors = await loadPackagesFor(...sources);
+    if (needPytest) await pyodide.loadPackage("pytest", { messageCallback: () => {} });
+    return { errors };
+  },
+  async run({ code, extraFiles }) {
     const pkgErrors = await loadPackagesFor(code);
-    const result = JSON.parse(harness.run_user(code));
+    const files = pyodide.toPy(extraFiles || {});
+    const result = JSON.parse(harness.run_user(code, files));
+    files.destroy();
     result.packageErrors = pkgErrors;
     return result;
   },

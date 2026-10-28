@@ -90,14 +90,30 @@ def _collect_figures():
     return out
 
 
-def run_user(code):
-    """Execute learner code as a script. Returns JSON with stdout/error/figures."""
+def _write_files(files):
+    os.makedirs(WORK_DIR, exist_ok=True)
+    for rel, content in (files or {}).items():
+        path = os.path.join(WORK_DIR, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(content)
+
+
+def run_user(code, files=None):
+    """Execute learner code as a script. Returns JSON with stdout/error/figures.
+
+    `files` (name -> text) are written to the working directory first, and the
+    code runs there, so open("gps_log.txt") works exactly as in the tests.
+    """
     _register_source(code)
     out = _CappedWriter()
     err = None
+    _write_files(files)
+    old_cwd = os.getcwd()
     old_out, old_input = sys.stdout, builtins.input
     sys.stdout, builtins.input = out, _no_input
     try:
+        os.chdir(WORK_DIR)
         compiled = compile(code, USER_FILE, "exec")
         exec(compiled, {"__name__": "__main__", "__file__": USER_FILE})
     except SystemExit:
@@ -105,6 +121,7 @@ def run_user(code):
     except BaseException as exc:  # noqa: BLE001 - we report everything to the learner
         err = _error_info(exc, code)
     finally:
+        os.chdir(old_cwd)
         sys.stdout, builtins.input = old_out, old_input
     figures = []
     try:
@@ -159,11 +176,7 @@ def run_tests(code, test_source, test_name="test_hidden.py", extra_files=None):
         fh.write(code)
     with open(os.path.join(WORK_DIR, test_name), "w", encoding="utf-8") as fh:
         fh.write(test_source)
-    for rel, content in (extra_files or {}).items():
-        path = os.path.join(WORK_DIR, rel)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write(content)
+    _write_files(extra_files)
     for mod in [m for m in sys.modules if m in ("solution", test_name[:-3])]:
         del sys.modules[mod]
     if WORK_DIR not in sys.path:

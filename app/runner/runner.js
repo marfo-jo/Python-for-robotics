@@ -4,6 +4,7 @@
 
 const DEFAULT_TIMEOUT_MS = 8000;
 const BOOT_TIMEOUT_MS = 120000;
+const PACKAGE_TIMEOUT_MS = 180000;
 
 let worker = null;
 let booted = null;
@@ -95,6 +96,8 @@ function call(type, payload, timeoutMs = DEFAULT_TIMEOUT_MS) {
     }
     setStatus("running");
     try {
+      // Package downloads get their own generous timeout; only running the code is timed tightly.
+      await send("prepare", { sources: [payload.code, payload.tests].filter(Boolean), needPytest: type === "test" }, PACKAGE_TIMEOUT_MS);
       return await send(type, payload, timeoutMs);
     } catch (err) {
       if (err.timeout) return { stdout: "", error: timeoutError(timeoutMs), timedOut: true };
@@ -107,7 +110,7 @@ function call(type, payload, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return job;
 }
 
-export const runCode = (code, timeoutMs) => call("run", { code }, timeoutMs);
+export const runCode = (code, timeoutMs, extraFiles) => call("run", { code, extraFiles }, timeoutMs);
 export const runTests = (code, tests, opts = {}) =>
   call("test", { code, tests, testName: opts.testName, extraFiles: opts.extraFiles }, opts.timeoutMs || 15000);
 export const traceCode = (code, maxSteps) => call("trace", { code, maxSteps }, 10000);

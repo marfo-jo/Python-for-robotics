@@ -1,0 +1,81 @@
+{
+  "id": "m00.l04",
+  "title": "0.4 for loops and the NMEA checksum",
+  "minutes": 80,
+  "objectives": [
+    "Iterate over the characters of a string, over a list, and over range(start, stop, step), and say exactly which values a range produces",
+    "Explain bitwise XOR (^) with a truth table, and why XORing every byte works like a parity check",
+    "Compute the NMEA checksum with a for loop, ord(), ^, and format(x, \"02X\"), skipping the '$' and the '*'",
+    "Validate a sentence's checksum robustly: whitespace and \\r\\n, lowercase hex, a missing '$' or '*'"
+  ],
+  "skills": {"python": 3},
+  "whereYouSawThis": {"course": "EECE5554 Robot Sensing and Navigation", "topic": "GPS lab: verifying the *hh checksum of each NMEA sentence in the driver before parsing it (and a preview of C bitwise operators, which use the same ^)"},
+  "examples": [
+    {"id": "ex1", "title": "for over characters and ranges", "file": "examples/ex1.py",
+     "expectedOutput": "G 71\nP 80\nV 86\nT 84\nG 71\nscan 0\nscan 1\nscan 2\ni = 1\ni = 5\ni = 9\nt = 6\nt = 4\nt = 2\n0 $\n1 G\n2 P"},
+    {"id": "ex2", "title": "XOR, bits, and hex", "file": "examples/ex2.py",
+     "expectedOutput": "6\n0101 0011 0110\n71 01000111\n80 01010000\n23 00010111\nTrue\n0\n71\n0x17 17 03\n124 124"},
+    {"id": "ex3", "title": "The NMEA checksum, step by step", "file": "examples/ex3.py",
+     "expectedOutput": "GPGGA,123519 ... .9,M,,\n71 01000111\n47\ngiven 47 computed 47\nTrue"},
+    {"id": "ex4", "title": "Catching corruption (and what XOR misses)", "file": "examples/ex4.py",
+     "expectedOutput": "speed 0.13 OK 03\nspeed 0.18 CORRUPT 08 != 03\nspeed 0.31 OK 03\n2 2\n00110011 00111000"}
+  ],
+  "predict": [
+    {"id": "p1", "question": "What does this print?",
+     "code": "for i in range(1, 10, 3):\n    print(i)",
+     "choices": ["1\n4\n7\n10", "1\n4\n7", "1\n3\n9", "0\n3\n6\n9"], "answer": 1,
+     "why": "range(start, stop, step) starts AT start (1) and adds step (3) each time: 1, 4, 7. The next value, 10, is not less than stop (10), so it's excluded. The stop is never included, exactly like a slice [start:stop]."},
+    {"id": "p2", "question": "What does this print?",
+     "code": "print(5 ^ 3)",
+     "choices": ["125", "6", "8", "2"], "answer": 1,
+     "why": "In Python (and C), ^ is bitwise XOR, not a power. 5 is 0101 and 3 is 0011; XOR gives 1 where the bits differ: 0110, which is 6. Powers use ** (5 ** 3 is 125)."},
+    {"id": "p3", "question": "The checksum loop over a two-character body. What does this print?",
+     "code": "total = 0\nfor ch in \"AA\":\n    total ^= ord(ch)\nprint(format(total, \"02X\"))",
+     "choices": ["82", "00", "41", "0"], "answer": 1,
+     "why": "XOR is not addition. ord('A') is 65 (0x41); 0 ^ 65 = 65, then 65 ^ 65 = 0, because any value XOR itself is 0 (every bit pair matches). Adding would give 130 = 0x82. And '02X' pads to two digits, so 0 prints as '00', not '0'."}
+  ],
+  "visualizations": [
+    {"id": "v1", "component": "xor-checksum", "title": "XOR checksum, one character at a time",
+     "props": {"sentence": "$GPVTG,309.62,T,,M,0.13,N,0.2,K,A*03"},
+     "notice": "Step with the arrows and watch the 'checksum so far' bits: each new character flips exactly the bits where it has a 1. Then change 0.13 to 0.18 (caught: the checksum no longer matches) and to 0.31 (NOT caught: same checksum, because XOR doesn't care about order).",
+     "predictFirst": {"question": "'G' is 01000111 and 'P' is 01010000. What will 'checksum so far' be after the first two characters, in binary? And if you change 0.13 to 0.31 (swap two digits), will the checksum still say it matches?",
+                      "reveal": "00010111 (23, hex 17): a 1 wherever G and P differ. And yes, the swapped version still matches: XOR is order-independent (a ^ b == b ^ a), so the checksum catches a corrupted character but not two swapped ones."}},
+    {"id": "v2", "component": "tracer", "title": "Trace: the checksum loop and its range",
+     "props": {"code": "line = \"$GPVTG*52\"\nstar = line.find(\"*\")\ntotal = 0\nfor i in range(1, star):\n    total ^= ord(line[i])\nprint(format(total, \"02X\"), line[star + 1:])\nprint(format(total, \"02X\") == line[star + 1:])"},
+     "notice": "Watch `i` in the variables table: it goes 1, 2, 3, 4, 5 and stops. Index 0 (the '$') and index 6 (the '*') are never visited, because range(1, star) starts at 1 and stops BEFORE star. `total` changes on every pass and never goes above 127, because XOR never carries.",
+     "predictFirst": {"question": "star is 6 here. Which values of i will the loop visit? Will it ever look at the '$' or the '*'?",
+                      "reveal": "i = 1, 2, 3, 4, 5. range(1, 6) starts at 1 (skipping the '$' at index 0) and stops before 6 (the '*'). That's exactly the body 'GPVTG', and its checksum is 52."}}
+  ],
+  "challenge": {
+    "task": "Write xor_checksum(body), which returns the XOR of all characters as exactly 2 uppercase hex digits, and checksum_ok(sentence), which returns True only if the sentence starts with '$', has a '*', and its checksum matches, handling whitespace, \\r\\n and lowercase hex and never crashing.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "checksum includes the '$' start marker",
+    "report": "Bench log: \"The GPS module ignores every configuration command we send. The update rate stays at the default. A logic analyzer on TX shows we send $PMTK220,1000*3B but the datasheet example says *1F.\" with_checksum(body) builds a complete command from its body. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: why does the checksum loop skip the '$' and stop before the '*', why must you print the result with format(total, \"02X\") instead of hex(total), and what kind of transmission error can the XOR checksum NOT detect?",
+    "rubric": [
+      "Says the NMEA checksum is defined over the characters strictly between '$' and '*'; including either one changes the XOR (the '$' flips bits 0x24) and every valid sentence would be rejected",
+      "Explains that the checksum is compared as text: exactly 2 uppercase hex digits, so it must be zero-padded ('03', not '3') and not have the '0x' prefix that hex() adds; lowercase input must be uppercased",
+      "Explains that XOR is order-independent (like parity), so two swapped characters, or two errors that flip the same bit, give the same checksum and go undetected"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "xor_checksum is a running total, like a sum, but with ^ instead of +. What starting value leaves the first character unchanged? For checksum_ok: which characters belong to the body, and what should you check BEFORE you start slicing?",
+      "xor_checksum: start at 0, XOR in ord() of each character with a for loop, then format with \"02X\". checksum_ok: strip the line; find the '*'; if the line doesn't start with '$' or find returned -1, return False. Otherwise XOR the characters from index 1 up to (not including) the star, and compare the 2-digit result to the text after the star, uppercased.",
+      "xor_checksum: total = 0; for each character ch in body: total = total XOR ord(ch); return total formatted as 2 uppercase hex digits. checksum_ok: line = strip(sentence); star = position of '*' (or -1); if line doesn't start with '$' or star is -1: return False; total = 0; for i in range(1, star): total = total XOR ord(line[i]); return (total as 2 uppercase hex digits) == (line after the star, uppercased)."
+    ],
+    "bug": [
+      "Which characters is the NMEA checksum computed over? Which characters does this loop actually visit?",
+      "The loop runs over \"$\" + body, so the '$' (0x24) gets XORed in: 1F ^ 24 = 3B. Loop over the body only, and add the '$' when you build the output."
+    ]
+  }
+}

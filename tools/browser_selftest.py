@@ -3,6 +3,7 @@
     python tools/browser_selftest.py              # all Module 0 lessons
     python tools/browser_selftest.py m00.l01      # one lesson
     python tools/browser_selftest.py --cv         # also check OpenCV loads
+    python tools/browser_selftest.py --ui         # render key app pages, check for errors
 
 Serves the repo root on localhost (including the local, gitignored
 verification/ folder, so reference solutions are checked in Pyodide too),
@@ -44,6 +45,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         pass
 
 
+class QuietServer(http.server.ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass  # the iframe aborting a request mid-navigation is expected
+
+
 def find_browser():
     for b in BROWSERS:
         if os.path.exists(b) or shutil.which(b):
@@ -53,8 +59,9 @@ def find_browser():
 
 def main(argv):
     lesson = next((a for a in argv[1:] if not a.startswith("--")), None)
-    query = "report=1" + (f"&lesson={lesson}" if lesson else "") + ("&cv=1" if "--cv" in argv else "")
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Handler, directory=str(ROOT)))
+    query = ("report=1" + (f"&lesson={lesson}" if lesson else "") + ("&cv=1" if "--cv" in argv else "")
+             + ("&ui=1" if "--ui" in argv else ""))
+    server = QuietServer(("127.0.0.1", 0), functools.partial(Handler, directory=str(ROOT)))
     port = server.server_address[1]
     threading.Thread(target=server.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{port}/tools/selftest.html?{query}"

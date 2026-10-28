@@ -1,0 +1,142 @@
+{
+  "id": "m00.l08",
+  "title": "0.8 Dictionaries",
+  "minutes": 80,
+  "objectives": [
+    "Create a dict that maps field names to values, and read, add, and overwrite entries by key",
+    "Explain KeyError, and use `in` and .get() with a default to handle missing keys safely",
+    "Build a dict from a parsed NMEA sentence, leaving out fields that are empty",
+    "Loop over a dict with .items(), and count things (like sentence types in a log) with a dict",
+    "Dispatch on sentence type with a dict of functions, and explain why keys must match exactly (case matters)"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: turning a $GPGGA line into named fields (time, quality, satellites, altitude) for your ROS 2 GPS message, and routing each sentence type to the right parser"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "Dict basics: keys, values, KeyError, and .get",
+      "file": "examples/ex1.py",
+      "expectedOutput": "9\n{'time': '152305.00', 'quality': 1, 'satellites': 10, 'hdop': 1.1}\n4\nTrue False False\nNone\n0.0\n1.1"
+    },
+    {
+      "id": "ex2",
+      "title": "Build a dict of named fields from a sentence",
+      "file": "examples/ex2.py",
+      "expectedOutput": "time = 152305.00\nlat = 4220.1234\nlat_dir = N\nlon = 07105.5678\nlon_dir = W\nquality = 1\nsatellites = 09\nhdop = 1.1\naltitude = 12.3\n{'quality': '0', 'satellites': '00'}\nno altitude yet\n['quality', 'satellites']"
+    },
+    {
+      "id": "ex3",
+      "title": "Count sentence types in a log",
+      "file": "examples/ex3.py",
+      "expectedOutput": "{'GGA': 3, 'RMC': 1, 'GSA': 1, 'GSV': 1, 'VTG': 1}\nGGA 3\nRMC 1\nGSA 1\nGSV 1\nVTG 1\nTrue 0\n7 sentences"
+    },
+    {
+      "id": "ex4",
+      "title": "Dispatch: a dict of functions",
+      "file": "examples/ex4.py",
+      "expectedOutput": "GGA -> fix quality 1 with 09 satellites\nRMC -> status V\nVTG -> ignored\nTrue"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "The receiver didn't send an HDOP field, so the dict has no 'hdop' key. What does this print?",
+      "code": "fix = {\"quality\": 1, \"satellites\": 8}\nprint(fix[\"hdop\"])",
+      "choices": [
+        "None",
+        "0",
+        "KeyError",
+        "{}"
+      ],
+      "answer": 2,
+      "why": "Square-bracket lookup on a missing key raises KeyError. Python doesn't invent a value for you. If a key might be missing, use fix.get(\"hdop\"), which gives None, or fix.get(\"hdop\", 99.9) for your own default. Or check first with \"hdop\" in fix."
+    },
+    {
+      "id": "p2",
+      "question": "A first attempt at counting sentence types. What does this print?",
+      "code": "counts = {}\nfor kind in [\"GGA\", \"RMC\", \"GGA\"]:\n    counts[kind] = 1\nprint(counts)",
+      "choices": [
+        "{'GGA': 2, 'RMC': 1}",
+        "{'GGA': 1, 'RMC': 1}",
+        "{'GGA': 1, 'RMC': 1, 'GGA': 1}",
+        "KeyError"
+      ],
+      "answer": 1,
+      "why": "Assigning to a key that already exists OVERWRITES its value; it doesn't add to it. The second 'GGA' just sets counts['GGA'] to 1 again. And a dict can never hold the same key twice, so the three-entry answer is impossible. To count, add one to the old value: counts[kind] = counts.get(kind, 0) + 1."
+    },
+    {
+      "id": "p3",
+      "question": "A dispatch table keyed by sentence type. What does this print?",
+      "code": "handlers = {\"GGA\": \"fix\", \"RMC\": \"nav\"}\nprint(\"gga\" in handlers, \"fix\" in handlers, handlers.get(\"gga\", \"ignored\"))",
+      "choices": [
+        "True True fix",
+        "False True ignored",
+        "False False ignored",
+        "True False fix"
+      ],
+      "answer": 2,
+      "why": "Keys must match EXACTLY, and string comparison is case-sensitive: 'gga' is not 'GGA'. And `in` on a dict checks KEYS only, never values, so 'fix' in handlers is False even though 'fix' is one of the values. .get falls back to its default for the missing key 'gga'."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: counting sentence types with .get",
+      "props": {
+        "code": "lines = [\"$GPVTG,309.62,T,,M,0.13,N,0.2,K,A*03\", \"$GPGSA,A,3,03,04,06,13,17,19,24,28,,,,,1.8,1.0,1.5*3F\", \"$GPVTG,309.62,T,,M,0.13,N,0.2,K,A*03\"]\ncounts = {}\nfor line in lines:\n    kind = line[3:6]\n    old = counts.get(kind, 0)\n    counts[kind] = old + 1\nprint(counts)"
+      },
+      "notice": "The first time a type shows up, counts.get(kind, 0) returns the default 0, so the new key starts at 1. The second VTG finds the key already there, gets 1, and stores 2. The dict grows a new key only when a new type appears.",
+      "predictFirst": {
+        "question": "Before you trace: the log has VTG, GSA, VTG. What will old be on each of the three passes, and what will counts hold at the end?",
+        "reveal": "old is 0 (first VTG: no key yet, so the default), then 0 (first GSA), then 1 (VTG is already there). counts ends as {'VTG': 2, 'GSA': 1}, with keys in the order they were first added."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "tracer",
+      "title": "Trace: dispatch with a dict of functions",
+      "props": {
+        "code": "def on_gga(fields):\n    return \"fix with \" + fields[7] + \" satellites\"\n\ndef on_rmc(fields):\n    return \"status \" + fields[2]\n\nhandlers = {\"GGA\": on_gga, \"RMC\": on_rmc}\nfields = \"$GPRMC,152305.00,A,4220.1234,N,07105.5678,W,0.05,87.30,281026,,,A*75\".split(\",\")\nkind = fields[0][3:6]\nhandler = handlers.get(kind)\nresult = handler(fields)\nprint(result)\nprint(handlers.get(\"GSV\"))"
+      },
+      "notice": "handler holds a FUNCTION (picked out of the dict by the key 'RMC'). Nothing runs until handler(fields), and then the trace jumps into on_rmc. Looking up a type with no handler ('GSV') gives None instead of crashing."
+    }
+  ],
+  "challenge": {
+    "task": "Write gga_to_dict(sentence), which returns a dict of time (str), quality (int), satellites (int), hdop (float), and altitude (float) from a GGA sentence, leaving out keys for empty fields and returning None for non-GGA or cut-off input, and count_types(sentences), which returns a dict mapping each sentence type (talker-independent) to its count, skipping blank lines and lines without '$'.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "dict key case mismatch ('gga' vs 'GGA')",
+    "report": "Overnight logging run: \"The logger ran for eight hours and the fix log is empty. handle() returns None for every single sentence, even $GPGGA lines with valid checksums. No errors, no crashes.\" Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: why did the dispatcher return None for every sentence without raising any error? What's the difference between fix[\"hdop\"] and fix.get(\"hdop\", 0.0) when the key is missing? And how does counts[kind] = counts.get(kind, 0) + 1 count correctly the first time a type appears?",
+    "rubric": [
+      "Explains that dict keys must match exactly and string comparison is case-sensitive, so 'GGA' never found the key 'gga'; .get returned None instead of raising, so the failure was silent",
+      "Explains that square brackets raise KeyError for a missing key, while .get returns a default (None, or the value you pass) instead",
+      "Explains that .get(kind, 0) gives 0 for a type not yet seen, so the first count becomes 1, and later lookups find and increase the stored value"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "gga_to_dict is your 0.6 parser again, but the output has NAMES instead of positions. What do you check before converting each field, so an empty one is skipped rather than crashing? For count_types: what does counts[kind] do the very first time you see a kind?",
+      "gga_to_dict: strip and split; return None unless it's GGA with at least 15 fields. Start with an empty dict. For each of the five fields, only if its text isn't empty, store the converted value under its key name. count_types: start with an empty dict; for each line, strip it and skip it unless it starts with '$'; take the type from characters 3 to 6, and add one to its count using .get with a default of 0.",
+      "gga_to_dict(sentence): fields = split(strip(sentence), ','); if fields[0] characters 3 to 6 aren't 'GGA' or there are fewer than 15 fields: return None. fix = empty dict. if fields[1] isn't empty: fix['time'] = fields[1]. Do the same for 'quality' (int of field 6), 'satellites' (int of field 7), 'hdop' (float of field 8), 'altitude' (float of field 9). return fix. count_types(sentences): counts = empty dict; for each line: line = strip(line); if line starts with '$': kind = line characters 3 to 6; counts[kind] = (counts.get(kind, default 0)) + 1. return counts."
+    ],
+    "bug": [
+      "Print the kind that handle() computes for a $GPGGA line, and print HANDLERS. Compare the two strings character by character. Is 'GGA' equal to 'gga'?",
+      "Dict keys match exactly, and case counts. The type taken from the sentence is uppercase, so the keys in HANDLERS must be uppercase too: 'GGA' and 'RMC'. Because .get returns None for a missing key, the mismatch was silent instead of a KeyError."
+    ]
+  }
+}

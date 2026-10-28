@@ -1,0 +1,177 @@
+{
+  "title": "C2 quiz: types, sizes, and overflow",
+  "items": [
+    {
+      "id": "q1",
+      "q": "What is sizeof(int) on the Arduino Uno (ATmega328P, avr-gcc)?",
+      "choices": [
+        "1",
+        "2",
+        "4",
+        "8"
+      ],
+      "answer": 1,
+      "why": "int is 16 bits (2 bytes) on AVR. It's 4 bytes on your x86-64 VM. The C standard only promises at least 16 bits, which is why embedded code uses stdint.h types when the width matters."
+    },
+    {
+      "id": "q2",
+      "code": "uint8_t x = 250;\nx = x + 10;",
+      "q": "What value does x hold afterwards?",
+      "choices": [
+        "260",
+        "255",
+        "4",
+        "Undefined behavior"
+      ],
+      "answer": 2,
+      "why": "uint8_t holds 0 to 255. Unsigned arithmetic wraps modulo 256: 260 - 256 = 4. This is guaranteed by C, not undefined. It does NOT saturate at 255 (that would need explicit code)."
+    },
+    {
+      "id": "q3",
+      "q": "The MPU-6050 datasheet says ACCEL_XOUT is a 16-bit two's complement value. Which type should hold it?",
+      "choices": [
+        "uint16_t",
+        "int16_t",
+        "int",
+        "uint8_t"
+      ],
+      "answer": 1,
+      "why": "Two's complement means signed, and the width is exactly 16 bits, so int16_t. uint16_t turns a small negative reading such as -1 into 65535. Plain int is 32 bits on the VM, so assembling the two bytes into an int there loses the sign unless you're careful."
+    },
+    {
+      "id": "q4",
+      "code": "int t = 32767;   /* on the Uno, int is 16 bits */\nt++;",
+      "q": "On the Uno, what does the C standard say happens here?",
+      "choices": [
+        "It is guaranteed to wrap to -32768",
+        "It is guaranteed to saturate at 32767",
+        "It is undefined behavior: signed overflow has no defined result",
+        "It is a compile error"
+      ],
+      "answer": 2,
+      "why": "Signed overflow is undefined behavior. It often wraps in practice, but the optimizer may assume it can't happen and remove your checks. Only unsigned types have guaranteed wraparound. (On the VM, int16_t t; t = t + 1; computes in 32-bit int and then converts, which gcc defines as wrapping: a different rule, same lesson.)"
+    },
+    {
+      "id": "q5",
+      "code": "int lastPrint = 0;\nvoid loop() {\n  int now = millis();\n  if (now - lastPrint >= 1000) {\n    Serial.println(\"tick\");\n    lastPrint = now;\n  }\n}",
+      "q": "On an Uno, roughly when does this start misbehaving?",
+      "choices": [
+        "After about 32.8 seconds",
+        "After about 65.5 seconds",
+        "After about 49.7 days",
+        "Never: millis() handles it"
+      ],
+      "answer": 0,
+      "why": "A 16-bit signed int tops out at 32767, so after 32767 ms (32.767 s) the value squeezed into now turns negative and the comparison breaks. 65.5 s would be a 16-bit unsigned limit; 49.7 days is when the real 32-bit millis() counter wraps. Fix: uint32_t now and uint32_t lastPrint."
+    },
+    {
+      "id": "q6",
+      "code": "uint32_t last = 4294967295u;   /* 1 ms before the wrap */\nuint32_t now  = 5u;            /* after the wrap */\nuint32_t elapsed = now - last;",
+      "q": "What is elapsed?",
+      "choices": [
+        "6",
+        "4294967290",
+        "-4294967290",
+        "0"
+      ],
+      "answer": 0,
+      "why": "Unsigned subtraction is modulo 2^32: 5 - 4294967295 + 4294967296 = 6. That's the real elapsed time (1 ms up to the wrap, then 5 more). It's why now - last >= interval works across a millis() rollover with no special code."
+    },
+    {
+      "id": "q7",
+      "code": "for (uint8_t i = 0; i < 300; i++) {\n    buffer_clear(i);\n}",
+      "q": "What happens?",
+      "choices": [
+        "It runs 300 times",
+        "It runs 256 times and stops",
+        "It never ends: i wraps from 255 to 0, so i < 300 is always true",
+        "Compile error: 300 doesn't fit in uint8_t"
+      ],
+      "answer": 2,
+      "why": "A uint8_t can never reach 300. After 255 it wraps to 0 and the condition stays true forever. In firmware that looks like a hung board. gcc's -Wextra (-Wtype-limits) can warn that the comparison is always true."
+    },
+    {
+      "id": "q8",
+      "q": "Which printf format prints a uint32_t correctly on BOTH the VM and the Uno?",
+      "choices": [
+        "\"%u\"",
+        "\"%lu\"",
+        "\"%\" PRIu32  (from inttypes.h)",
+        "\"%d\""
+      ],
+      "answer": 2,
+      "why": "uint32_t is unsigned int on x86-64 but unsigned long on AVR, so %u is right on one and %lu on the other. PRIu32 expands to the correct one for each platform, and C joins the adjacent string literals."
+    },
+    {
+      "id": "q9",
+      "q": "The byte 0xFF is stored in an int8_t. What value does it represent?",
+      "choices": [
+        "255",
+        "-1",
+        "-127",
+        "-128"
+      ],
+      "answer": 1,
+      "why": "In two's complement the top bit has weight -128: -128 + 127 = -1. The same bits are 255 as a uint8_t. The type decides how the bits are read, like a datasheet marking a field signed or unsigned."
+    },
+    {
+      "id": "q10",
+      "q": "What is sizeof(uint32_t) on the VM and on the Uno?",
+      "choices": [
+        "4 on both",
+        "8 on the VM, 4 on the Uno",
+        "4 on the VM, 2 on the Uno",
+        "It depends on the value stored"
+      ],
+      "answer": 0,
+      "why": "Fixed-width types are the same size everywhere (32 bits = 4 bytes). That is the whole point of stdint.h. sizeof depends only on the type, never on the value."
+    },
+    {
+      "id": "q11",
+      "code": "uint16_t a = 300;\nuint8_t b = a;",
+      "q": "What value does b hold?",
+      "choices": [
+        "300",
+        "255",
+        "44",
+        "0"
+      ],
+      "answer": 2,
+      "why": "Converting to an unsigned type keeps the value modulo 2^8 = 256, which in practice keeps the low 8 bits: 300 - 256 = 44 (0x012C becomes 0x2C). No saturation, and by default no warning (-Wconversion would warn)."
+    },
+    {
+      "id": "q12",
+      "q": "On the Uno, sizeof(double) is 4. What does that mean for your code?",
+      "choices": [
+        "double on the Uno has the same (single) precision as float, about 7 significant digits",
+        "double on the Uno is twice as precise as on the VM",
+        "The Uno can't do floating point at all",
+        "Nothing: double is always 8 bytes"
+      ],
+      "answer": 0,
+      "why": "avr-gcc makes double the same 32-bit format as float. Math you test on the VM in double (about 15 to 16 digits) can lose precision on the Uno. It's one reason firmware often uses integer or fixed-point math (C20)."
+    }
+  ],
+  "interview": [
+    {
+      "q": "Why do embedded developers use types like uint8_t and uint32_t instead of int?",
+      "rubric": [
+        "States that int's size is platform-dependent (the standard only guarantees 16 bits); it's 16 bits on AVR and 32 on x86-64",
+        "Explains that fixed-width types make the size explicit and portable across MCU, desktop, and test builds",
+        "Connects widths to hardware: registers, packet fields, and datasheet bit widths are fixed (for example a 16-bit signed sensor register as int16_t)",
+        "Mentions memory: on a 2 KB RAM part, choosing uint8_t vs a 4-byte type matters",
+        "Gives a concrete bug, such as storing millis() in an int on an Uno, or reading a signed register as unsigned"
+      ]
+    },
+    {
+      "q": "What happens when an integer overflows in C? Explain how millis() rollover is handled safely.",
+      "rubric": [
+        "Unsigned overflow is well defined: it wraps modulo 2^n",
+        "Signed overflow is undefined behavior, and explains why that is dangerous (the optimizer can assume it never happens and remove checks)",
+        "millis() is a 32-bit unsigned counter that wraps after about 49.7 days",
+        "The safe pattern is uint32_t elapsed = now - last; compared with the interval, because unsigned subtraction gives the right answer across the wrap",
+        "Warns against storing the timestamp in an int, or writing now >= last + interval (the sum can wrap)"
+      ]
+    }
+  ]
+}

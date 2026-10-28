@@ -1,0 +1,162 @@
+{
+  "title": "A1 quiz: dividers, loading, and pull-ups",
+  "items": [
+    {
+      "id": "q1",
+      "q": "Vin = 5 V, R1 (top) = 10 kΩ, R2 (bottom) = 20 kΩ, no load. What is Vout?",
+      "choices": ["1.67 V", "2.50 V", "3.33 V", "5.00 V"],
+      "answer": 2,
+      "why": "Vout = Vin × R2 / (R1 + R2) = 5 × 20 / 30 = 3.33 V. 1.67 V is what you get by putting R1 in the numerator by mistake (5 × 10 / 30)."
+    },
+    {
+      "id": "q2",
+      "q": "A 12.6 V battery feeds a divider with R1 = 20 kΩ (top) and R2 = 10 kΩ (bottom). What voltage reaches the ADC pin?",
+      "choices": ["4.2 V", "6.3 V", "8.4 V", "12.6 V"],
+      "answer": 0,
+      "why": "12.6 × 10 / (20 + 10) = 12.6 / 3 = 4.2 V, safely under the Uno's 5 V ADC range. 8.4 V is the R1-on-top-of-the-fraction mistake."
+    },
+    {
+      "id": "q3",
+      "q": "With 4.2 V on the pin, about what does the Uno's 10-bit ADC (5 V reference) read?",
+      "choices": ["about 430", "about 640", "about 860", "1023 (saturated)"],
+      "answer": 2,
+      "why": "4.2 / 5 × 1023 = 859.3, so about 859 (860 with the 1024 convention). 430 would be about 2.1 V; 1023 would mean the pin was at or above 5 V."
+    },
+    {
+      "id": "q4",
+      "q": "How much current does that 20k + 10k divider draw from the 12.6 V battery?",
+      "choices": ["0.42 mA", "1.26 mA", "4.2 mA", "0.63 mA"],
+      "answer": 0,
+      "why": "I = 12.6 V / (20 kΩ + 10 kΩ) = 0.42 mA, continuously. That's about 10 mAh per day (0.42 mA × 24 h), which matters on a battery robot."
+    },
+    {
+      "id": "q5",
+      "q": "What is the Thévenin output impedance of a 10 kΩ / 10 kΩ divider?",
+      "choices": ["20 kΩ", "10 kΩ", "5 kΩ", "0 Ω"],
+      "answer": 2,
+      "why": "Rth = R1 ∥ R2 = (10k × 10k) / (10k + 10k) = 5 kΩ. Looking back into the output with Vin shorted, both resistors appear in parallel."
+    },
+    {
+      "id": "q6",
+      "q": "A 10 kΩ / 10 kΩ divider from 5 V is loaded with 10 kΩ from Vout to GND. What is Vout now?",
+      "choices": ["2.50 V", "2.27 V", "1.67 V", "1.25 V"],
+      "answer": 2,
+      "why": "R2 ∥ RL = 5 kΩ, so Vout = 5 × 5 / (10 + 5) = 1.67 V. Or with Thévenin: 2.5 × 10 / (5 + 10) = 1.67 V. A load equal to R2 drops the output by a third."
+    },
+    {
+      "id": "q7",
+      "q": "Same divider (Vth = 2.5 V, Rth = 5 kΩ) loaded with 50 kΩ. What is Vout?",
+      "choices": ["2.50 V", "2.27 V", "2.45 V", "1.67 V"],
+      "answer": 1,
+      "why": "Vout = 2.5 × 50 / (5 + 50) = 2.27 V, a 9.1% error. A load 10× Rth still costs about 9% (1/11); for precision you want 100× or a buffer."
+    },
+    {
+      "id": "q8",
+      "q": "Why does I2C need pull-up resistors?",
+      "choices": [
+        "To limit the current into the microcontroller",
+        "Because the SDA and SCL outputs are open-drain: devices can only pull the line low, so something must pull it high",
+        "To filter noise at high frequencies",
+        "Only for 3.3 V devices"
+      ],
+      "answer": 1,
+      "why": "Open-drain lets several devices share the bus safely (no push-pull fights), enables wired-AND for ACK and clock stretching, and lets the pull-up set the logic-high voltage. Without pull-ups, the line never goes high."
+    },
+    {
+      "id": "q9",
+      "q": "An I2C line has a 4.7 kΩ pull-up to 5 V. How much current must a device sink to hold it low (near 0 V)?",
+      "choices": ["0.47 mA", "1.06 mA", "3.0 mA", "10.6 mA"],
+      "answer": 1,
+      "why": "I = 5 V / 4.7 kΩ = 1.06 mA, under the 3 mA the I2C spec guarantees a device can sink at 0.4 V. (To be exact, 4.6 V across the resistor gives 0.98 mA.)"
+    },
+    {
+      "id": "q10",
+      "q": "Rp = 4.7 kΩ and bus capacitance Cb = 100 pF. Using t_r ≈ 0.8473 × Rp × Cb (30% to 70%), which I2C modes meet the rise-time limit?",
+      "choices": [
+        "Both standard (100 kHz, 1000 ns) and fast (400 kHz, 300 ns)",
+        "Standard mode only",
+        "Fast mode only",
+        "Neither"
+      ],
+      "answer": 1,
+      "why": "t_r = 0.8473 × 4.7 kΩ × 100 pF = 398 ns. That's under 1000 ns (standard) but over 300 ns (fast). For 400 kHz, use a smaller pull-up such as 2.2 kΩ (186 ns)."
+    },
+    {
+      "id": "q11",
+      "q": "What is the minimum pull-up for a 3.3 V I2C bus, if devices sink 3 mA at V_OL = 0.4 V?",
+      "choices": ["about 133 Ω", "about 967 Ω", "about 1.53 kΩ", "about 4.7 kΩ"],
+      "answer": 1,
+      "why": "Rp,min = (VCC − V_OL) / I_OL = (3.3 − 0.4) / 3 mA = 967 Ω. 1.53 kΩ is the answer for 5 V ((5 − 0.4) / 3 mA). Smaller than the minimum and a device can't pull the line low enough to read as 0."
+    },
+    {
+      "id": "q12",
+      "q": "The GY-521 pulls SDA up to 3.3 V. Using the ATmega328P general I/O V_IH of 0.6 × VCC at VCC = 5 V, what is the high-level noise margin?",
+      "choices": ["0.3 V", "1.7 V", "1.1 V", "-0.2 V (it fails)"],
+      "answer": 0,
+      "why": "V_IH = 0.6 × 5 = 3.0 V, and the line idles at 3.3 V: margin = 3.3 − 3.0 = 0.3 V. It works, but noise, long wires, or a sagging rail can eat 0.3 V. (If the TWI table's stricter 0.7 × VCC = 3.5 V applies, it's actually below spec.)"
+    },
+    {
+      "id": "q13",
+      "q": "A 5 V sensor outputs a 'high' of 2.2 V into an ATmega328P input (VCC = 5 V, V_IL max = 1.5 V, V_IH min = 3.0 V). What will the pin read?",
+      "choices": [
+        "Always HIGH",
+        "Always LOW",
+        "Undefined: 2.2 V is between V_IL max and V_IH min, so it may read either way",
+        "It damages the pin"
+      ],
+      "answer": 2,
+      "why": "Between 1.5 V and 3.0 V the datasheet guarantees nothing. It may read high on the bench and low when hot. Design to stay out of the gap."
+    },
+    {
+      "id": "q14",
+      "q": "You need the HC-SR04's 5 V ECHO signal on a 3.3 V Raspberry Pi pin. Which divider is right?",
+      "choices": [
+        "1 kΩ from ECHO to the Pi pin, 2 kΩ from the Pi pin to GND (gives 3.33 V)",
+        "2 kΩ from ECHO to the Pi pin, 1 kΩ from the Pi pin to GND (gives 1.67 V)",
+        "1 kΩ from ECHO to the Pi pin, nothing to GND",
+        "No resistors: Pi pins are 5 V tolerant"
+      ],
+      "answer": 0,
+      "why": "5 × 2 / (1 + 2) = 3.33 V. Swapped gives 5 × 1 / 3 = 1.67 V, which may not read high. A series resistor alone doesn't lower the voltage on a high-impedance input. Pi GPIO is NOT 5 V tolerant."
+    },
+    {
+      "id": "q15",
+      "q": "A button goes from pin 2 to GND, with pinMode(2, INPUT_PULLUP). What does digitalRead(2) return while the button is pressed?",
+      "choices": ["HIGH", "LOW", "It floats", "It alternates"],
+      "answer": 1,
+      "why": "The internal pull-up holds the pin HIGH when released; pressing connects it to GND, so it reads LOW. Active-low logic: code must test for LOW to detect a press."
+    }
+  ],
+  "interview": [
+    {
+      "q": "How would you measure a 12 V battery with a microcontroller whose ADC only reads 0 to 5 V? Walk me through your component choices.",
+      "rubric": [
+        "Uses a resistor divider, states the equation Vout = Vin × R2 / (R1 + R2), and picks a ratio that keeps the maximum battery voltage (about 12.6 V or more) below the ADC reference with margin",
+        "Discusses resistor magnitude as a trade-off: larger values waste less battery current, smaller values keep the source impedance low enough for the ADC (about 10 kΩ or less on an ATmega328P)",
+        "Mentions loading and Thévenin output impedance, and a capacitor on the ADC pin or a buffer as fixes",
+        "Explains converting the ADC count back to battery volts in firmware, including the divider ratio and calibration",
+        "Mentions protection or robustness: overvoltage on the pin, tolerances of the resistors, and noise filtering"
+      ]
+    },
+    {
+      "q": "Why does I2C need pull-up resistors, and how do you choose their value?",
+      "rubric": [
+        "Explains open-drain outputs: devices can only pull low, so the pull-up provides the high level; this allows bus sharing, ACK, and clock stretching safely",
+        "Upper limit: rise time from Rp and bus capacitance (t_r ≈ 0.85 Rp Cb), with the mode limits (about 1000 ns at 100 kHz, 300 ns at 400 kHz)",
+        "Lower limit: devices must sink the current at V_OL (3 mA at 0.4 V gives about 1.5 kΩ at 5 V)",
+        "Gives typical values (4.7 kΩ at 100 kHz, 2.2 kΩ at 400 kHz or longer wires) and notes that pull-ups on several modules add in parallel",
+        "Mentions the pull-up voltage sets the logic-high level, so it matters in mixed 3.3 V / 5 V systems"
+      ]
+    },
+    {
+      "q": "Your MPU-6050 breakout works on the bench, but I2C reads fail intermittently once it's mounted on the robot with longer wires near the motors. How do you debug it?",
+      "rubric": [
+        "Starts with measurements: scope SDA and SCL to look at rise times, high and low levels, and noise or ringing, rather than guessing",
+        "Identifies likely causes: bus capacitance from long wires slowing edges, small noise margin from 3.3 V pull-ups on a 5 V MCU, motor noise or ground bounce, a sagging supply",
+        "Proposes fixes tied to the cause: stronger pull-ups, lower bus speed, shorter or twisted wiring, a level shifter, separate grounds or decoupling for motor and logic",
+        "Mentions firmware robustness: timeouts, error counting, and bus recovery so one bad read doesn't hang the robot",
+        "Verifies the fix under the failing condition (motors running) and draws on a systematic troubleshooting process"
+      ]
+    }
+  ]
+}

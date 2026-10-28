@@ -1,0 +1,7 @@
+# These files run inside the Ubuntu VM. Keep Unix line endings even when the
+# repo is checked out on Windows (core.autocrlf=true), or bash and diff break.
+*.sh  text eol=lf
+*.c   text eol=lf
+*.h   text eol=lf
+*.txt text eol=lf
+*.ino text eol=lf

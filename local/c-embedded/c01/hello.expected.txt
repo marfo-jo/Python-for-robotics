@@ -1,0 +1,2 @@
+Hello from the VM!
+C standard: 201112

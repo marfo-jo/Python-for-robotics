@@ -1,0 +1,143 @@
+{
+  "id": "m00.l06",
+  "title": "0.6 Functions",
+  "minutes": 85,
+  "objectives": [
+    "Define a function with def, call it with arguments, and explain the difference between a parameter and an argument",
+    "Explain the difference between return and print, and recognize the None you get when a function prints instead of returning",
+    "Explain local scope: names created inside a function exist only during that call",
+    "Use a default argument, and call a function with positional and keyword arguments",
+    "Write docstrings, and build a parser from small functions that compose (validate, then parse)"
+  ],
+  "skills": {
+    "python": 3
+  },
+  "whereYouSawThis": {
+    "course": "EECE5554 Robot Sensing and Navigation",
+    "topic": "GPS lab: the parse function inside your ROS 2 GPS driver node that turns one $GPGGA line into the values it publishes"
+  },
+  "examples": [
+    {
+      "id": "ex1",
+      "title": "Define, call, and document a function",
+      "file": "examples/ex1.py",
+      "expectedOutput": "GGA\nRMC\nTrue\nReturn the 3-letter type of an NMEA sentence, like 'GGA'."
+    },
+    {
+      "id": "ex2",
+      "title": "print versus return: where does the value go?",
+      "file": "examples/ex2.py",
+      "expectedOutput": "9\na = None\nb = 9\nTrue\nTrue"
+    },
+    {
+      "id": "ex3",
+      "title": "Default arguments, keyword arguments, and local scope",
+      "file": "examples/ex3.py",
+      "expectedOutput": "True\nFalse\nTrue\nFalse\n0\n4"
+    },
+    {
+      "id": "ex4",
+      "title": "Small functions that compose: is this RMC fix usable?",
+      "file": "examples/ex4.py",
+      "expectedOutput": "RMC V False\nRMC A True\nGGA None False\nRMC None False"
+    }
+  ],
+  "predict": [
+    {
+      "id": "p1",
+      "question": "This helper prints the satellite field. What does the whole program print?",
+      "code": "def sats(fields):\n    print(fields[7])\n\nn = sats([\"$GPGGA\", \"152305.00\", \"4220.1234\", \"N\", \"07105.5678\", \"W\", \"1\", \"09\"])\nprint(n)",
+      "choices": [
+        "09\n09",
+        "09\nNone",
+        "None",
+        "9\nNone"
+      ],
+      "answer": 1,
+      "why": "Calling sats() runs its print, so '09' appears on the screen. But the function has no return, so Python hands back None, and that's what n holds. print shows a value to a human; return hands a value to the code that called the function. It's '09', not 9, because the field is still text: nobody called int()."
+    },
+    {
+      "id": "p2",
+      "question": "What does this print?",
+      "code": "count = 0\n\ndef log_fix():\n    count = 5\n    return count\n\nlog_fix()\nprint(count)",
+      "choices": [
+        "5",
+        "0",
+        "NameError",
+        "None"
+      ],
+      "answer": 1,
+      "why": "Assigning count = 5 inside the function creates a NEW local name that exists only during the call. The global count is a different name that happens to be spelled the same, and it stays 0. The function did return 5, but the caller threw that value away because it didn't store it (no x = log_fix())."
+    },
+    {
+      "id": "p3",
+      "question": "A satellite-count check with a default threshold. What does this print?",
+      "code": "def enough(sats, minimum=4):\n    return sats >= minimum\n\nprint(enough(5), enough(5, 6), enough(3, minimum=3))",
+      "choices": [
+        "True False True",
+        "True True True",
+        "False False True",
+        "TypeError"
+      ],
+      "answer": 0,
+      "why": "enough(5) uses the default minimum of 4, so 5 >= 4 is True. enough(5, 6) passes 6 as the second argument, which replaces the default: 5 >= 6 is False. enough(3, minimum=3) sets minimum by name: 3 >= 3 is True. A default is only used when the caller doesn't supply that argument."
+    }
+  ],
+  "visualizations": [
+    {
+      "id": "v1",
+      "component": "tracer",
+      "title": "Trace: a local name doesn't leave the function",
+      "props": {
+        "code": "def sentence_type(sentence):\n    clean = sentence.strip()\n    kind = clean[3:6]\n    return kind\n\nline = \"  $GPVTG,309.62,T,,M,0.13,N,0.2,K,A*03\\r\\n\"\nresult = sentence_type(line)\nprint(result)\nprint(clean)",
+        "expectError": true
+      },
+      "notice": "While sentence_type runs, the variables table shows its own locals: sentence, clean, kind. When it returns, they vanish. Only the returned value comes back, and it lands in result. That's why the last line raises NameError: clean never existed outside the function.",
+      "predictFirst": {
+        "question": "Before you trace: the last line is print(clean). clean was created inside the function. What happens when Python reaches that line?",
+        "reveal": "NameError: name 'clean' is not defined. clean was a local name. It existed only while sentence_type was running, like a scratch register inside a block. The only thing that crossed the block's output terminal was the return value, now stored in result."
+      }
+    },
+    {
+      "id": "v2",
+      "component": "tracer",
+      "title": "Trace: print versus return",
+      "props": {
+        "code": "def sats_print(fields):\n    print(fields[7])\n\ndef sats_return(fields):\n    return int(fields[7])\n\nfields = \"$GPGGA,152305.00,4220.1234,N,07105.5678,W,1,09,1.1,12.3,M,-33.1,M,,*64\".split(\",\")\na = sats_print(fields)\nb = sats_return(fields)\nprint(\"a =\", a, \" b =\", b)"
+      },
+      "notice": "Watch the return event of each call. sats_print returns None (it only printed), while sats_return returns 9. The output panel shows 09 from the first call, but the variables table shows the truth: a is None."
+    }
+  ],
+  "challenge": {
+    "task": "Write is_gga(sentence), which validates a GGA sentence (any talker, stripped, starts with '$', at least 15 fields), and parse_gga(sentence, min_sats=4), which uses is_gga and returns [utc_time (str), fix_quality (int), satellites (int), altitude (float)], or None for non-GGA input, no fix (quality 0), or too few satellites.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "print instead of return (caller gets None)",
+    "report": "Bench test of the GPS logger: \"The console prints the right satellite count (9) every second, so the parsing works. But the fix filter crashes with TypeError: '>=' not supported between instances of 'NoneType' and 'int'.\" good_enough() should return True when a fix used at least `minimum` satellites. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: what is the difference between print and return inside a function? Why did the buggy satellites() show the right number on the screen but still break good_enough()? And why can't code outside a function see a variable created inside it?",
+    "rubric": [
+      "Explains that print only shows a value on the screen, while return hands the value back to the calling code so it can be stored or used",
+      "Explains that a function with no return statement gives back None, so good_enough compared None >= 4 and raised TypeError",
+      "Explains local scope: names created inside a function exist only during that call; only the returned value comes out"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "Build is_gga first and test it on its own with Run. It's a single True/False answer built from three checks joined with `and`. Then parse_gga can START by asking is_gga, and return None early if the answer is no. Which check must come before you convert any field to a number?",
+      "is_gga: strip the sentence, split it, and combine: starts with '$', characters 3 to 6 are 'GGA', and the field list has at least 15 items. parse_gga: if not is_gga, return None. Convert the fix quality and return None if it's 0, BEFORE touching altitude (a no-fix sentence has empty fields). Then convert satellites and compare with min_sats (the parameter, not a hard-coded 4). Finally RETURN a list of the four values.",
+      "is_gga(sentence): clean = strip(sentence); fields = split(clean, ','); return (clean starts with '$') and (clean from 3 to 6 is 'GGA') and (length of fields >= 15). parse_gga(sentence, min_sats): if not is_gga(sentence): return None. fields = split(strip(sentence), ','). quality = int(fields[6]); if quality is 0: return None. sats = int(fields[7]); if sats < min_sats: return None. return the list [fields[1], quality, sats, float(fields[9])]."
+    ],
+    "bug": [
+      "Run the buggy file and read both output lines. The 9 appears on the screen, but what value does n actually hold? What does a function hand back when it has no return statement?",
+      "satellites() puts the number on the screen with print but never hands it back, so it returns None, and good_enough compares None >= 4. Replace the print with a return of the same value."
+    ]
+  }
+}

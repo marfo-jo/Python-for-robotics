@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" width="720" height="360" role="img" aria-labelledby="t d">
+  <title id="t">Voltage divider and open-drain I2C line with a pull-up resistor</title>
+  <desc id="d">Left: Vin feeds R1 in series with R2 to ground; Vout is taken at the junction. Right: a pull-up resistor Rp from 3.3 V to the SDA line; the Uno pin A4 (SDA) and the GY-521 SDA pin each contain a transistor that can only pull the line to ground.</desc>
+  <rect x="4" y="4" width="712" height="352" rx="16" fill="#ffffff" stroke="#c8ccd2"/>
+  <g font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" fill="#1b1f24" stroke="#1b1f24" stroke-width="2">
+    <!-- Panel A: divider -->
+    <text x="40" y="36" stroke="none" font-weight="600" font-size="15">(a) Voltage divider</text>
+    <line x1="120" y1="60" x2="120" y2="90"/>
+    <circle cx="120" cy="60" r="4" fill="#1b1f24"/>
+    <text x="132" y="64" stroke="none">Vin</text>
+    <rect x="105" y="90" width="30" height="70" fill="#ffffff"/>
+    <text x="146" y="130" stroke="none">R1 (top)</text>
+    <line x1="120" y1="160" x2="120" y2="200"/>
+    <circle cx="120" cy="180" r="4" fill="#1b1f24"/>
+    <line x1="120" y1="180" x2="200" y2="180"/>
+    <circle cx="200" cy="180" r="4" fill="#ffffff"/>
+    <text x="210" y="185" stroke="none">Vout</text>
+    <text x="210" y="203" stroke="none" font-size="12">(to ADC pin or load)</text>
+    <rect x="105" y="200" width="30" height="70" fill="#ffffff"/>
+    <text x="146" y="240" stroke="none">R2 (bottom)</text>
+    <line x1="120" y1="270" x2="120" y2="300"/>
+    <line x1="100" y1="300" x2="140" y2="300"/>
+    <line x1="107" y1="307" x2="133" y2="307"/>
+    <line x1="114" y1="314" x2="126" y2="314"/>
+    <text x="146" y="312" stroke="none">GND</text>
+    <text x="40" y="342" stroke="none" font-size="13">Vout = Vin · R2 / (R1 + R2)</text>
+
+    <!-- divider between panels -->
+    <line x1="330" y1="30" x2="330" y2="330" stroke="#c8ccd2" stroke-width="1"/>
+
+    <!-- Panel B: open drain + pull-up -->
+    <text x="360" y="36" stroke="none" font-weight="600" font-size="15">(b) Open-drain line with a pull-up</text>
+    <line x1="400" y1="62" x2="680" y2="62"/>
+    <text x="600" y="54" stroke="none">+3.3 V rail</text>
+    <line x1="430" y1="62" x2="430" y2="85"/>
+    <rect x="415" y="85" width="30" height="55" fill="#ffffff"/>
+    <text x="452" y="118" stroke="none">Rp (pull-up)</text>
+    <line x1="430" y1="140" x2="430" y2="170"/>
+    <line x1="400" y1="170" x2="690" y2="170" stroke-width="3"/>
+    <circle cx="430" cy="170" r="4" fill="#1b1f24"/>
+    <text x="400" y="162" stroke="none" font-weight="600">SDA line</text>
+
+    <!-- device 1: Uno -->
+    <line x1="520" y1="170" x2="520" y2="205"/>
+    <circle cx="520" cy="205" r="4" fill="#1b1f24"/>
+    <text x="480" y="200" stroke="none" font-size="12" text-anchor="end">Uno A4 (SDA)</text>
+    <line x1="520" y1="205" x2="535" y2="240"/>
+    <line x1="520" y1="245" x2="520" y2="270"/>
+    <circle cx="520" cy="245" r="4" fill="#1b1f24"/>
+    <line x1="505" y1="270" x2="535" y2="270"/>
+    <line x1="511" y1="276" x2="529" y2="276"/>
+    <text x="520" y="295" stroke="none" font-size="12" text-anchor="middle">GND</text>
+    <text x="545" y="230" stroke="none" font-size="12">pulls low</text>
+
+    <!-- device 2: GY-521 -->
+    <line x1="620" y1="170" x2="620" y2="205"/>
+    <circle cx="620" cy="205" r="4" fill="#1b1f24"/>
+    <text x="608" y="200" stroke="none" font-size="12" text-anchor="end">GY-521 SDA</text>
+    <line x1="620" y1="205" x2="635" y2="240"/>
+    <line x1="620" y1="245" x2="620" y2="270"/>
+    <circle cx="620" cy="245" r="4" fill="#1b1f24"/>
+    <line x1="605" y1="270" x2="635" y2="270"/>
+    <line x1="611" y1="276" x2="629" y2="276"/>
+    <text x="620" y="295" stroke="none" font-size="12" text-anchor="middle">GND</text>
+    <text x="642" y="230" stroke="none" font-size="12">pulls low</text>
+
+    <text x="360" y="322" stroke="none" font-size="13">Each device can only connect the line to GND (switch closed = 0).</text>
+    <text x="360" y="342" stroke="none" font-size="13">Nobody drives it high: Rp pulls it up to 1 when all switches are open.</text>
+  </g>
+</svg>
