@@ -1,0 +1,52 @@
+{
+  "summary": "Start from strings and build up to loops, functions, lists, dicts, tuples, f-strings, files, exceptions, and debugging. Every lesson uses real GPS NMEA sentences, the same data you parsed in EECE5554, so by the end you can write a GPS log parser yourself.",
+  "lessons": ["m00.l01", "m00.l02", "m00.l03", "m00.l04", "m00.l05", "m00.l06", "m00.l07", "m00.l08", "m00.l09", "m00.l10", "m00.l11", "m00.l12"],
+  "lessonDirs": {
+    "m00.l01": "l01-strings-nmea",
+    "m00.l02": "l02-conditionals",
+    "m00.l03": "l03-while-loops",
+    "m00.l04": "l04-for-loops-checksum",
+    "m00.l05": "l05-lists",
+    "m00.l06": "l06-functions",
+    "m00.l07": "l07-tuples",
+    "m00.l08": "l08-dicts",
+    "m00.l09": "l09-fstrings-units",
+    "m00.l10": "l10-reading-files",
+    "m00.l11": "l11-exceptions-tracebacks",
+    "m00.l12": "l12-debugging"
+  },
+  "lessonTitles": {
+    "m00.l01": "0.1 Strings: anatomy of a $GPGGA sentence",
+    "m00.l02": "0.2 Conditionals and booleans",
+    "m00.l03": "0.3 while loops",
+    "m00.l04": "0.4 for loops and the NMEA checksum",
+    "m00.l05": "0.5 Lists",
+    "m00.l06": "0.6 Functions",
+    "m00.l07": "0.7 Tuples and unpacking",
+    "m00.l08": "0.8 Dictionaries",
+    "m00.l09": "0.9 f-strings and unit conversion",
+    "m00.l10": "0.10 Reading files",
+    "m00.l11": "0.11 Exceptions and reading tracebacks",
+    "m00.l12": "0.12 Debugging like a technician"
+  },
+  "quiz": "quiz.json",
+  "project": {
+    "title": "NMEA log analyzer",
+    "brief": "project/brief.md",
+    "starter": "project/starter.py",
+    "tests": "project/test_project.py",
+    "readme": "project/README_template.md",
+    "exportName": "nmea_analyzer.py",
+    "dataFiles": {"gps_log.txt": "content/data/gps_log.txt"},
+    "hints": ["Break it into small functions you already wrote in the lessons: validate one line, parse one GGA, then loop over lines.", "Count three things as you loop: total lines, lines with a bad checksum or format, and valid GGA fixes by quality. A dict is perfect for counting by quality.", "Pseudocode: for each line in the file: strip it; skip if blank; if checksum invalid: bad += 1, continue; if it's GGA: parse it, update counts and min/max satellites. After the loop, build and return the summary dict."],
+    "resumeBullet": "Wrote a Python NMEA 0183 log analyzer that validates XOR checksums, parses GGA fixes, and reports fix-quality statistics, tested with N pytest cases including corrupted and empty-field input."
+  },
+  "noHands": {
+    "title": "Parse an RMC sentence, closed book",
+    "brief": "nohands/brief.md",
+    "starter": "nohands/starter.py",
+    "tests": "nohands/test_nohands.py",
+    "minutes": 30
+  },
+  "bridges": {"robots": "bridge-ros.md", "cpp": "bridge-cpp.md"}
+}

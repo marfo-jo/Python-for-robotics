@@ -1,0 +1,6 @@
+{
+  "arena": {"title": "Arena with obstacles (reach the green circle)", "world": {"name": "arena", "width": 4.0, "height": 3.0, "obstacles": [[1.6, 1.2, 0.25], [2.6, 2.0, 0.3], [3.0, 0.8, 0.2]], "start": [0.4, 0.4, 0.6], "goal": [3.6, 2.6, 0.2]}},
+  "corridor": {"title": "Zig-zag corridor", "world": {"name": "corridor", "width": 5.0, "height": 2.0, "walls": [[0.0, 0.6, 4.0, 0.6], [1.0, 1.4, 5.0, 1.4]], "start": [0.3, 0.3, 0.0], "goal": [4.6, 1.7, 0.2]}},
+  "line-track": {"title": "Line-following track", "world": {"name": "line-track", "width": 4.0, "height": 3.0, "line": [[0.5, 0.5], [3.0, 0.5], [3.5, 1.0], [3.5, 2.2], [3.0, 2.6], [1.0, 2.6], [0.5, 2.1], [0.5, 0.5]], "start": [0.5, 0.5, 0.0]}},
+  "empty": {"title": "Empty room (try driving a square)", "world": {"name": "empty", "width": 4.0, "height": 4.0, "start": [1.0, 1.0, 0.0]}}
+}

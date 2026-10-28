@@ -1,0 +1,77 @@
+{
+  "id": "m00.l01",
+  "title": "0.1 Strings: anatomy of a $GPGGA sentence",
+  "minutes": 70,
+  "objectives": [
+    "Index and slice a string using positive and negative indexes, and explain the half-open [start:stop) rule",
+    "Clean serial input with strip() and split a sentence into fields with split(',')",
+    "Explain why strings are immutable and why you must keep a method's result",
+    "Extract the talker ID, sentence type, and checksum from a real NMEA sentence"
+  ],
+  "skills": {"python": 3},
+  "whereYouSawThis": {"course": "EECE5554 Robot Sensing and Navigation", "topic": "GPS lab: parsing $GPGGA NMEA sentences in a ROS 2 GPS driver"},
+  "examples": [
+    {"id": "ex1", "title": "Indexing and slicing a real sentence", "file": "examples/ex1.py",
+     "expectedOutput": "65\n$\nGPGGA\n123519\n47\n$GPGGA!"},
+    {"id": "ex2", "title": "A line straight from a serial port", "file": "examples/ex2.py",
+     "expectedOutput": "67\n'\\r\\n'\n'47'\n65\n47\n4807.038 N\n''"},
+    {"id": "ex3", "title": "Talker, type, and checksum from messy input", "file": "examples/ex3.py",
+     "expectedOutput": "True True\nGP GGA\nGN RMC\n61\n7c\n7C\nTrue False\n-1"}
+  ],
+  "predict": [
+    {"id": "p1", "question": "What does this print?",
+     "code": "s = \"$GPGGA,123519\"\nprint(s[1:6])",
+     "choices": ["$GPGG", "GPGGA", "GPGGA,", "PGGA,"], "answer": 1,
+     "why": "Slices include the start index and stop BEFORE the stop index. Index 1 is 'G' (index 0 is '$'), and the slice ends at index 5 ('A'). That's 6 − 1 = 5 characters."},
+    {"id": "p2", "question": "A receiver with no fix sends a sentence full of empty fields. How many items does split give?",
+     "code": "fields = \"$GPGGA,,,\".split(\",\")\nprint(len(fields))",
+     "choices": ["1", "3", "4", "0"], "answer": 2,
+     "why": "Three commas cut the string into four pieces: '$GPGGA', '', '', ''. n separators always give n + 1 pieces, even when the pieces are empty. That's why empty GPS fields don't shift the positions of later fields."},
+    {"id": "p3", "question": "What happens?",
+     "code": "s = \"$GPGGA\"\ns[0] = \"!\"\nprint(s)",
+     "choices": ["!GPGGA", "$GPGGA", "TypeError"], "answer": 2,
+     "why": "Strings are immutable: you can't assign to s[0]. Python raises TypeError: 'str' object does not support item assignment. To 'change' a string, build a new one: s = \"!\" + s[1:]."}
+  ],
+  "visualizations": [
+    {"id": "v1", "component": "nmea-fields", "title": "NMEA field explorer",
+     "props": {"sentence": "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47"},
+     "notice": "Commas are highlighted. Empty fields (two commas touching) still get their own index, so field 6 is ALWAYS fix quality, whether or not earlier fields are empty. Negative indexes in the slice boxes count from the end.",
+     "predictFirst": {"question": "This sentence has 14 commas. How many items will split(',') return? And which index will the fix quality '1' have?",
+                      "reveal": "15 items (n commas → n + 1 pieces). Fix quality is index 6: count '$GPGGA' as index 0."}},
+    {"id": "v2", "component": "tracer", "title": "Trace: strings never change",
+     "props": {"code": "raw = \"  $GNRMC,220516,A*7c\\r\\n\"\nline = raw.strip()\ntalker = line[1:3]\nkind = line[3:6]\nstar = line.find(\"*\")\nchecksum = line[star + 1:].upper()\nprint(talker, kind, checksum)"},
+     "notice": "raw keeps its spaces and \\r\\n the whole time. strip() made a NEW string. The variables table highlights each variable when it's created or changed."}
+  ],
+  "challenge": {
+    "task": "Write talker_id(sentence), sentence_type(sentence), and checksum_text(sentence) for NMEA sentences that may have stray whitespace, a trailing \\r\\n, lowercase hex, and talkers other than GP.",
+    "starter": "challenge/starter.py",
+    "tests": "challenge/test_challenge.py",
+    "timeLimitMs": 8000
+  },
+  "bug": {
+    "file": "bug/buggy.py",
+    "tests": "bug/test_bug.py",
+    "bugType": "off-by-one field index",
+    "report": "Field test log: \"The GPS logger reports the fix quality as 'E' or 'W' on every sentence, but the receiver clearly has a fix (fix quality should be 1).\" The function is supposed to return the fix-quality field of a $GPGGA sentence. Find the bug and fix it."
+  },
+  "explainBack": {
+    "prompt": "In your own words: why must you call strip() BEFORE taking line[-2:] to get the checksum from a line read off a serial port? And why do you have to write line = line.strip(), not just line.strip()?",
+    "rubric": [
+      "Says serial lines end with invisible characters (\\r\\n or whitespace) that a negative slice would grab instead of the checksum",
+      "Explains that strip() removes whitespace from both ends (not the middle)",
+      "Explains that strings are immutable, so strip() returns a NEW string that must be stored in a variable"
+    ],
+    "minWords": 40
+  },
+  "hints": {
+    "challenge": [
+      "What's at index 0 of every sentence? If the talker starts right after it, which index does the talker start at? And what should happen to stray whitespace first?",
+      "Strip the sentence first, then slice: the talker is 2 characters starting at index 1, and the type is the next 3. For the checksum, find the position of '*' and slice everything after it, then uppercase it.",
+      "talker: clean = strip(sentence); return clean[1 to 3). type: return clean[3 to 6). checksum: clean = strip(sentence); star = position of '*' in clean; return (clean from star + 1 to the end) uppercased."
+    ],
+    "bug": [
+      "Count the fields in a $GPGGA sentence starting from 0. Which index is '$GPGGA' itself?",
+      "split(',') puts '$GPGGA' at index 0, so the fix quality (the 7th item) is at index 6."
+    ]
+  }
+}

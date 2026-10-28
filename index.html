@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Python for Robotics</title>
+  <meta name="description" content="Interactive, test-graded Python for robotics course with in-browser Python, a robot simulator, and hardware sprint projects.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+  <!-- Pinned versions: see vendor/VERSIONS.md -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css">
+  <link rel="stylesheet" href="app/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/contrib/auto-render.min.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar">
+    <button id="nav-toggle" class="btn subtle" type="button" aria-label="Toggle curriculum menu">☰</button>
+    <a class="brand" href="#/">🤖 Python for Robotics</a>
+    <span id="py-status" class="py-status" role="status">Python: idle</span>
+    <button class="btn subtle" type="button" onclick="document.getElementById('help').showModal()" aria-label="Keyboard shortcuts">?</button>
+  </header>
+  <div class="layout">
+    <nav id="curriculum-nav" class="sidebar" aria-label="Curriculum"></nav>
+    <main id="main" class="content" tabindex="-1"></main>
+  </div>
+  <dialog id="help" aria-labelledby="help-title">
+    <h2 id="help-title">Keyboard shortcuts</h2>
+    <ul>
+      <li><kbd>Ctrl</kbd>+<kbd>Enter</kbd>: run code in the focused editor</li>
+      <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Enter</kbd>: submit to hidden tests</li>
+      <li><kbd>Esc</kbd>: leave the editor (so Tab moves focus again)</li>
+      <li><kbd>g</kbd>: dashboard &nbsp; <kbd>r</kbd>: review queue &nbsp; <kbd>?</kbd>: this help</li>
+    </ul>
+    <button id="help-close" class="btn primary" type="button">Close</button>
+  </dialog>
+  <script type="module" src="app/main.js"></script>
+</body>
+</html>

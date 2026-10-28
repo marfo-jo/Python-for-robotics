@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>selftest: running</title>
+</head>
+<body>
+<!-- Browser smoke test (local only, not deployed). Serve the repo root, then open
+     http://localhost:8000/tools/selftest.html?lesson=m00.l01  or  ?all=1
+     It runs Pyodide checks that mirror tools/verify.py: examples, predict answers,
+     starter fails, reference passes (from verification/), wrongs fail, bug, tracer, sim. -->
+<pre id="out">starting…</pre>
+<script type="module">
+import { runCode, runTests, traceCode, runSim } from "../app/runner/runner.js";
+
+const out = document.getElementById("out");
+const lines = [];
+let failures = 0;
+const log = (ok, msg) => { if (!ok) failures++; lines.push(`${ok ? "PASS" : "FAIL"} ${msg}`); out.textContent = lines.join("\n"); };
+const text = async (p) => { const r = await fetch(p, { cache: "no-cache" }); if (!r.ok) throw new Error(`${p} ${r.status}`); return r.text(); };
+const json = async (p) => JSON.parse(await text(p));
+const norm = (s) => s.trim().split("\n").map((l) => l.trimEnd()).join("\n");
+const exists = async (p) => (await fetch(p, { method: "HEAD" })).ok;
+
+async function checkLesson(mod, lid) {
+  const base = `../content/modules/m00-python-foundations/${mod.lessonDirs[lid]}`;
+  const meta = await json(`${base}/lesson.json`);
+  for (const ex of meta.examples) {
+    const res = await runCode(await text(`${base}/${ex.file}`));
+    log(!res.error && norm(res.stdout) === norm(ex.expectedOutput), `${lid} example ${ex.id} (pyodide)${res.error ? " " + res.error.type + ": " + res.error.message : ""}`);
+  }
+  for (const p of meta.predict) {
+    const res = await runCode(p.code);
+    const actual = res.error ? (norm(res.stdout) ? norm(res.stdout) + "\n" : "") + res.error.type : norm(res.stdout);
+    log(actual === norm(p.choices[p.answer]), `${lid} predict ${p.id} (got ${JSON.stringify(actual)})`);
+  }
+  for (const v of meta.visualizations.filter((x) => x.component === "tracer")) {
+    const res = await traceCode(v.props.code);
+    log(res.steps && res.steps.length > 0, `${lid} tracer ${v.id}: ${res.steps?.length} steps`);
+  }
+  const tests = await text(`${base}/${meta.challenge.tests}`);
+  const starter = await runTests(await text(`${base}/${meta.challenge.starter}`), tests, { testName: "test_challenge.py" });
+  log(!starter.ok, `${lid} starter fails (${starter.passed}/${starter.total})`);
+  const key = `../verification/${lid}`;
+  if (await exists(`${key}/challenge.py`)) {
+    const ref = await runTests(await text(`${key}/challenge.py`), tests, { testName: "test_challenge.py" });
+    log(ref.ok, `${lid} reference passes (${ref.passed}/${ref.total}) ${ref.collectErrors?.join(" ") || ""}`);
+  } else log(false, `${lid} no reference in verification/`);
+  const btests = await text(`${base}/${meta.bug.tests}`);
+  const buggy = await runTests(await text(`${base}/${meta.bug.file}`), btests, { testName: "test_bug.py" });
+  log(!buggy.ok, `${lid} buggy fails (${buggy.passed}/${buggy.total})`);
+  if (await exists(`${key}/bug_fixed.py`)) {
+    const fixed = await runTests(await text(`${key}/bug_fixed.py`), btests, { testName: "test_bug.py" });
+    log(fixed.ok, `${lid} bug fix passes (${fixed.passed}/${fixed.total})`);
+  }
+}
+
+async function main() {
+  const params = new URLSearchParams(location.search);
+  const t0 = performance.now();
+  const hello = await runCode("print('hello from pyodide')");
+  log(hello.stdout.trim() === "hello from pyodide", `pyodide boots (${((performance.now() - t0) / 1000).toFixed(1)}s)`);
+  const err = await runCode("x = [1]\nprint(x[3])");
+  log(err.error?.type === "IndexError" && err.error.lineno === 2, "IndexError reported with line number");
+  const loop = await runCode("while True:\n    pass", 2000);
+  log(loop.error?.type === "TimeoutError", "infinite loop is stopped by timeout");
+  const after = await runCode("print(2 + 2)");
+  log(after.stdout.trim() === "4", "worker recovers after timeout");
+  const np = await runCode("import numpy as np\nprint(np.arange(3).sum())");
+  log(np.stdout.trim() === "3", `numpy loads ${np.error ? np.error.message : ""}`);
+  const mpl = await runCode("import matplotlib.pyplot as plt\nplt.plot([1,2,3])\nprint('ok')", 60000);
+  log(mpl.stdout.trim() === "ok" && mpl.figures?.length === 1, `matplotlib renders a figure ${mpl.error ? mpl.error.message : ""}`);
+  if (params.get("cv") === "1") {
+    const cv = await runCode("import cv2\nprint(cv2.__version__)", 90000);
+    log(!cv.error, `opencv loads: ${cv.stdout.trim()} ${cv.error ? cv.error.message : ""}`);
+  }
+  const worlds = await json("../content/sim/worlds.json");
+  const sim = await runSim(await text("../content/sim/starter_controller.py"), worlds.arena.world, 10, 1);
+  log(!sim.error && sim.frames?.length === 200, `simulator runs (${sim.frames?.length} frames) ${sim.error ? sim.error.message : ""}`);
+
+  const mod = await json("../content/modules/m00-python-foundations/module.json");
+  const only = params.get("lesson");
+  for (const lid of mod.lessons) {
+    if (only && lid !== only) continue;
+    try {
+      await checkLesson(mod, lid);
+    } catch (e) {
+      log(false, `${lid}: ${e.message}`);
+    }
+  }
+  lines.push(`\n${failures === 0 ? "SELFTEST PASS" : `SELFTEST FAIL (${failures})`}`);
+  finish();
+}
+
+function finish() {
+  out.textContent = lines.join("\n");
+  document.title = "selftest: done";
+  if (new URLSearchParams(location.search).get("report") === "1") {
+    fetch("/__selftest_result", { method: "POST", body: lines.join("\n") });
+  }
+}
+main().catch((e) => { lines.push("CRASH " + e.stack, "SELFTEST FAIL (crash)"); finish(); });
+</script>
+</body>
+</html>

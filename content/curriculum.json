@@ -1,0 +1,83 @@
+{
+  "title": "Python for Robotics",
+  "modules": [
+    {"id": "m00", "short": "M0 Python Foundations", "title": "Module 0: Python Foundations", "dir": "m00-python-foundations", "status": "ready", "resumeSkill": "Python fundamentals: parsing and validating sensor data (NMEA)"},
+    {"id": "ms", "short": "S Sensor Data Toolkit", "title": "Module S: Sensor Data Toolkit", "dir": "ms-sensor-data", "status": "planned", "planned": "W3 to W4 (Nov 16 to 29)", "summary": "File I/O and CSV logging, pyserial, bytes and struct, binary packets with checksums, NumPy and Matplotlib for sensor data, pytest basics."},
+    {"id": "m01", "short": "M1 Data Structures", "title": "Module 1: Data Structures Robots Use", "dir": "m01-data-structures", "status": "planned", "planned": "W5 to W6"},
+    {"id": "m02", "short": "M2 OOP Robots", "title": "Module 2: Object-Oriented Robots", "dir": "m02-oop", "status": "planned", "planned": "W7 to W8"},
+    {"id": "m03", "short": "M3 Linear Algebra", "title": "Module 3: Practical Linear Algebra with NumPy", "dir": "m03-linear-algebra", "status": "planned", "planned": "W9 to W10"},
+    {"id": "m04", "short": "M4 Control Loop", "title": "Module 4: The Control Loop", "dir": "m04-control-loop", "status": "planned", "planned": "W11 to W12"},
+    {"id": "m05", "short": "M5 State Machines", "title": "Module 5: State Machines and Behaviors", "dir": "m05-fsm", "status": "planned", "planned": "W13"},
+    {"id": "m06", "short": "M6 Estimation", "title": "Module 6: Probabilistic State Estimation", "dir": "m06-estimation", "status": "planned", "planned": "W14 to W16"},
+    {"id": "m18", "short": "M18 Test & Validation", "title": "Module 18: Test, Validation and Reliability", "dir": "m18-test-validation", "status": "planned", "planned": "W17"},
+    {"id": "m11", "short": "M11 Software Eng.", "title": "Module 11: Software Engineering for Robots", "dir": "m11-software-engineering", "status": "planned", "planned": "W18 to W19"},
+    {"id": "m12", "short": "M12 Concurrency", "title": "Module 12: Concurrency and Communication", "dir": "m12-concurrency", "status": "planned", "planned": "W20"},
+    {"id": "m13", "short": "M13 ROS 2", "title": "Module 13: ROS 2 with rclpy", "dir": "m13-ros2", "status": "planned", "planned": "W21 to W23"},
+    {"id": "m07", "short": "M7 Kinematics", "title": "Module 7: Kinematics", "dir": "m07-kinematics", "status": "planned", "planned": "W24 to W25"},
+    {"id": "m08", "short": "M8 Planning", "title": "Module 8: Planning", "dir": "m08-planning", "status": "planned", "planned": "W26 to W27"},
+    {"id": "m09", "short": "M9 MPC", "title": "Module 9: Model Predictive Control", "dir": "m09-mpc", "status": "planned", "planned": "W28"},
+    {"id": "m10", "short": "M10 Computer Vision", "title": "Module 10: Computer Vision with OpenCV", "dir": "m10-vision", "status": "planned", "planned": "W29 to W31"},
+    {"id": "m16", "short": "M16 Full-Stack Tooling", "title": "Module 16: Full-Stack Tooling", "dir": "m16-tooling", "status": "planned", "planned": "W32"},
+    {"id": "m14", "short": "M14 PyTorch", "title": "Module 14: PyTorch and Deep Learning for Perception", "dir": "m14-pytorch", "status": "planned", "planned": "W33 to W35"},
+    {"id": "m15", "short": "M15 Reinforcement Learning", "title": "Module 15: Reinforcement Learning", "dir": "m15-rl", "status": "planned", "planned": "W36 to W37"},
+    {"id": "m17", "short": "M17 Robot Learning & Sim", "title": "Module 17: Robot Learning and Simulation", "dir": "m17-robot-learning", "status": "planned", "planned": "W38"},
+    {"id": "cap", "short": "Capstone", "title": "Capstone: Localize, Plan, Follow, Detect", "dir": "capstone", "status": "planned", "planned": "W39 to W41"}
+  ],
+  "tracks": [
+    {"id": "sprints", "title": "Sprint Projects", "dir": "sprints", "summary": "IMU data pipeline and DC motor test rig, built by you on real hardware.", "pages": [
+      {"id": "s1-overview", "group": "Sprint 1: IMU data pipeline", "title": "Sprint 1 overview: what you're building and why", "file": "s1-overview.md"},
+      {"id": "s1-m1", "group": "Sprint 1: IMU data pipeline", "title": "1.1 Wiring, I2C scan, and WHO_AM_I", "file": "s1-m1.md", "due": "2026-11-02"},
+      {"id": "s1-m2", "group": "Sprint 1: IMU data pipeline", "title": "1.2 Wake the chip, burst-read 14 bytes, stream CSV at 100 Hz", "file": "s1-m2.md", "due": "2026-11-06"},
+      {"id": "s1-m3", "group": "Sprint 1: IMU data pipeline", "title": "1.3 Python logger, unit conversion, first plot (MINIMAL VERSION)", "file": "s1-m3.md", "due": "2026-11-10",
+       "tests": [{"tests": "local/sprint1/m13/test_imu_convert.py", "module": "imu_convert", "reference": "imu_convert.py"}]},
+      {"id": "s1-m4", "group": "Sprint 1: IMU data pipeline", "title": "1.4 Binary packets and a resyncing parser", "file": "s1-m4.md", "due": "2026-11-18",
+       "tests": [{"tests": "local/sprint1/m14/test_imu_packet.py", "module": "imu_packet", "reference": "imu_packet.py"}]},
+      {"id": "s1-m5", "group": "Sprint 1: IMU data pipeline", "title": "1.5 A real pytest suite and GitHub Actions CI", "file": "s1-m5.md", "due": "2026-11-24"},
+      {"id": "s1-m6", "group": "Sprint 1: IMU data pipeline", "title": "1.6 Live plot, gyro bias, and a complementary filter", "file": "s1-m6.md", "due": "2026-11-30",
+       "tests": [{"tests": "local/sprint1/m16/test_imu_filter.py", "module": "imu_filter", "reference": "imu_filter.py"}]},
+      {"id": "s1-m7", "group": "Sprint 1: IMU data pipeline", "title": "1.7 Allan variance and the final README (FULL VERSION)", "file": "s1-m7.md", "due": "2026-12-04",
+       "tests": [{"tests": "local/sprint1/m17/test_allan.py", "module": "allan", "reference": "allan.py"}]},
+      {"id": "s2-overview", "group": "Sprint 2: DC motor test rig", "title": "Sprint 2 overview: a test rig you can put on your resume", "file": "s2-overview.md"},
+      {"id": "s2-m1", "group": "Sprint 2: DC motor test rig", "title": "2.1 Wiring, encoder ISR, and PWM commands", "file": "s2-m1.md", "due": "2026-11-26"},
+      {"id": "s2-m2", "group": "Sprint 2: DC motor test rig", "title": "2.2 Automated step tests and logging", "file": "s2-m2.md", "due": "2026-12-01"},
+      {"id": "s2-m3", "group": "Sprint 2: DC motor test rig", "title": "2.3 Equations of motion, first-order fit, simulation vs measurement", "file": "s2-m3.md", "due": "2026-12-05",
+       "tests": [{"tests": "local/sprint2/m23/test_motor_model.py", "module": "motor_model", "reference": "motor_model.py"}]},
+      {"id": "s2-m4", "group": "Sprint 2: DC motor test rig", "title": "2.4 PI speed controller from the model", "file": "s2-m4.md", "due": "2026-12-10"},
+      {"id": "s2-m5", "group": "Sprint 2: DC motor test rig", "title": "2.5 Endurance test and the one-page test report", "file": "s2-m5.md", "due": "2026-12-13"},
+      {"id": "bg-pyserial", "group": "Just-in-time background", "title": "Background: pyserial in 20 minutes", "file": "bg-pyserial.md"},
+      {"id": "bg-csv", "group": "Just-in-time background", "title": "Background: writing a CSV log", "file": "bg-csv.md"},
+      {"id": "bg-plot", "group": "Just-in-time background", "title": "Background: plotting a CSV log with Matplotlib", "file": "bg-plot.md"}
+    ]},
+    {"id": "c", "title": "C for Embedded", "dir": "c-embedded", "summary": "30 minutes a day: C on the desktop (VM) and on the Arduino Uno.", "pages": [
+      {"id": "c01", "group": "Week 0", "title": "C1 Toolchains: gcc in the VM and the Arduino IDE", "file": "c01.md", "quiz": "c01-quiz.json"},
+      {"id": "c02", "group": "Week 0", "title": "C2 Types, stdint.h, sizes, and overflow", "file": "c02.md", "quiz": "c02-quiz.json"}
+    ]},
+    {"id": "interview", "title": "Interview Refreshers", "dir": "interview", "summary": "Circuits, controls, and STAR stories. Short and quiz-heavy.", "pages": [
+      {"id": "star-intro", "group": "Behavioral (STAR)", "title": "How to build a STAR story from your real experience", "file": "star-intro.md"},
+      {"id": "star-1", "group": "Behavioral (STAR)", "title": "STAR 1: Diagnosing a failure", "file": "star-1.md", "quiz": "star-1-quiz.json"},
+      {"id": "star-2", "group": "Behavioral (STAR)", "title": "STAR 2: Building a troubleshooting checklist", "file": "star-2.md", "quiz": "star-2-quiz.json"},
+      {"id": "resume-audit", "group": "Behavioral (STAR)", "title": "Resume audit: from technician to robotics engineer", "file": "resume-audit.md"},
+      {"id": "a01", "group": "Circuits and analog", "title": "A1 Voltage dividers and pull-up resistors", "file": "a01.md", "quiz": "a01-quiz.json"}
+    ]}
+  ],
+  "skillAxes": [
+    {"id": "python", "label": "Python", "target": 150},
+    {"id": "math", "label": "Math", "target": 90},
+    {"id": "controls", "label": "Controls", "target": 70},
+    {"id": "estimation", "label": "Estimation", "target": 70},
+    {"id": "planning", "label": "Planning", "target": 45},
+    {"id": "perception", "label": "Perception", "target": 70},
+    {"id": "learning", "label": "Learning", "target": 60},
+    {"id": "ros2", "label": "ROS 2", "target": 60},
+    {"id": "softeng", "label": "Software Eng.", "target": 70}
+  ],
+  "roadmap": [
+    {"label": "W0", "start": "2026-10-29", "end": "2026-11-01", "focus": ["Lessons 0.1 to 0.3", "C1 and C2", "STAR stories 1 and 2, resume audit, A1 dividers and pull-ups", "Sprint 1, milestone 1.1: wiring, I2C scan, WHO_AM_I"]},
+    {"label": "W1", "start": "2026-11-02", "end": "2026-11-08", "focus": ["Lessons 0.4 to 0.8", "C3 to C7", "Sprint 1, milestone 1.2: wake, burst-read, stream CSV at 100 Hz", "STAR 3 and 4; A5 and A6 (BJT, MOSFET)"]},
+    {"label": "W2", "start": "2026-11-09", "end": "2026-11-15", "focus": ["Lessons 0.9 to 0.12, Module 0 quiz and project", "Sprint 1 MINIMAL due Nov 10 (fallback Nov 13 to 14)", "C8 to C12", "STAR 5 and 6; A7 and A4"]},
+    {"label": "W3", "start": "2026-11-16", "end": "2026-11-22", "focus": ["Module S lessons S.1 to S.5", "Sprint 1, milestone 1.4: binary packets", "ME5245 Midterm 2 on Nov 19: circuits refreshers double as review"]},
+    {"label": "W4", "start": "2026-11-23", "end": "2026-11-29", "focus": ["S.6 to S.10 and the S project", "Sprint 1, milestones 1.5 and 1.6; Sprint 2, milestone 2.1", "B1 and B2 (step response, PID)"]},
+    {"label": "W5", "start": "2026-11-30", "end": "2026-12-06", "focus": ["Module 1", "Sprint 1 FULL due ~Dec 4 (Allan variance, README)", "Sprint 2, milestones 2.2 and 2.3"]},
+    {"label": "W6", "start": "2026-12-07", "end": "2026-12-13", "focus": ["Module 1 quiz and project", "Sprint 2 due ~Dec 13 (realistic: up to Dec 18)", "B5, B6, mock interviews"]}
+  ]
+}
