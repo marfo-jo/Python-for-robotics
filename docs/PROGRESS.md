@@ -76,6 +76,10 @@ Learner-reported bug: a lesson 0.1 question asked for the index of the GGA fix-q
   - A heuristic flags field or index questions that have no reference.
 - **Re-verified:** 672/672 local checks; the Pyodide self-test and the UI self-test pass, including checks that the reference tables render.
 
+### UI fix (2026-10-29): no code-font ligatures
+
+Learner-reported bug: the code font (Cascadia Code) rendered `!=` as ≠, `<=` as ≤, and so on. Ligatures are now off (`font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0`) on every code surface: inline code, pre blocks, the tracer, and the CodeMirror editor lines, which `codemirror.css` had set to `contextual`. The UI self-test checks the computed style in both light and dark themes. The track-page image check now waits for images to load, which fixed an intermittent false failure.
+
 ### Not yet verified (needs the learner's VM or hardware)
 
 - [ ] C1/C2: run `bash local/c-embedded/check.sh` in the Ubuntu VM on the answer-key files. They pass the avr-gcc syntax check, but no output has been checked yet. Two outputs assume gcc 11 behavior: int16 wraparound and `__STDC_VERSION__ = 201112`.

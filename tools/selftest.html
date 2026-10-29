@@ -91,6 +91,17 @@ async function checkUI() {
     const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
     log(Boolean(ready(doc)) && !bad, `UI ${label}${bad ? " :: " + bad : ""}`);
   }
+  // Ligatures off in every code surface, in both themes (!= must not render as ≠).
+  for (const theme of ["light", "dark"]) {
+    const doc = await visit("#/l/m00/m00.l01", (d) => d.querySelectorAll(".CodeMirror-line").length > 0);
+    doc.documentElement.setAttribute("data-theme", theme);
+    const els = [...doc.querySelectorAll(".CodeMirror-line, .CodeMirror-line span, code, pre, .tracer-note")];
+    const lig = els.filter((e) => {
+      const s = frame.contentWindow.getComputedStyle(e);
+      return s.fontVariantLigatures !== "none" || !/"liga" 0/.test(s.fontFeatureSettings) || !/"calt" 0/.test(s.fontFeatureSettings);
+    });
+    log(els.length > 0 && lig.length === 0, `UI ligatures disabled in ${els.length} code elements (${theme} theme)${lig.length ? ` :: ${lig.length} still ligated, e.g. ${lig[0].className || lig[0].tagName}` : ""}`);
+  }
   // Seed progress so every lesson is unlocked, then render each lesson page and
   // the quiz / project / No Hands pages.
   const mod = await json("../content/modules/m00-python-foundations/module.json");
@@ -117,7 +128,7 @@ async function checkUI() {
   const cur = await json("../content/curriculum.json");
   for (const track of cur.tracks) {
     for (const page of track.pages.filter((p) => p.status !== "planned")) {
-      const doc = await visit(`#/t/${track.id}/${page.id}`, (d) => d.querySelector(".lesson-body") && d.querySelector(".lesson-body").children.length);
+      const doc = await visit(`#/t/${track.id}/${page.id}`, (d) => d.querySelector(".lesson-body")?.children.length && [...d.querySelectorAll(".lesson-body img")].every((i) => i.complete));
       const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
       const brokenImg = [...doc.querySelectorAll(".lesson-body img")].filter((i) => !i.complete || i.naturalWidth === 0).length;
       log(!bad && !brokenImg && doc.querySelector(".lesson-body")?.children.length > 0,
