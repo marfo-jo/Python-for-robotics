@@ -2,6 +2,7 @@
 // project, No Hands checkpoint, and settings pages.
 import { h, clear, button, toast, shuffle, download, section } from "../ui.js";
 import { renderInto } from "../md.js";
+import { refBlock, fillRefSlots } from "./reference.js";
 import { createEditor } from "../editor.js";
 import { loadModule, loadText, loadJSON, loadAllLessonMeta, findTrackPage } from "../content.js";
 import { runSim } from "../runner/runner.js";
@@ -11,6 +12,20 @@ import { renderExercise } from "./exercise.js";
 import { openTutor } from "./tutor-panel.js";
 import { tutorAvailable } from "../tutor/tutor.js";
 import * as store from "../store.js";
+
+// Markdown pages may embed {{ref:id}} protocol tables.
+async function renderMd(el, text) {
+  renderInto(el, text);
+  await fillRefSlots(el);
+  return el;
+}
+
+// Reference tables a question declares ("refs": [...]) appear right next to it.
+function refsFor(item) {
+  const host = h("div", {});
+  refBlock(item?.refs).then((block) => block && host.append(block));
+  return host;
+}
 
 // ------------------------------------------------------------ dashboard
 
@@ -114,7 +129,7 @@ export async function renderModule(root, curriculum, moduleId) {
   for (const [key, label] of [["robots", "Bridge to Real Robots"], ["cpp", "Bridge to C++"]]) {
     if (!mod.bridges?.[key]) continue;
     const box = h("div", { class: "bridge" });
-    renderInto(box, await loadText(`${mod.base}/${mod.bridges[key]}`));
+    await renderMd(box, await loadText(`${mod.base}/${mod.bridges[key]}`));
     root.append(h("section", { class: `card bridge-${key}` }, h("h2", {}, label), box));
   }
 }
@@ -139,7 +154,7 @@ export async function renderQuiz(root, curriculum, moduleId) {
   items.forEach((q, n) => {
     form.append(h("fieldset", { class: "card" },
       h("legend", {}, `${n + 1}. ${q.q}`),
-      q.code ? h("pre", { class: "code" }, q.code) : null,
+      refsFor(q), q.code ? h("pre", { class: "code" }, q.code) : null,
       q.order.map((ci) => h("label", { class: "choice-row" },
         h("input", { type: "radio", name: `q${n}`, value: ci }), " ", h("span", { class: "mono-ish" }, q.choices[ci]))),
       h("div", { class: "feedback" })));
@@ -182,7 +197,7 @@ async function resolveReviewItem(item) {
     const lessons = await loadAllLessonMeta();
     const lesson = lessons[ref.lessonId];
     const p = lesson?.predict?.find((x) => x.id === ref.itemId);
-    if (p) return { q: p.question || "What does this print?", code: p.code, choices: p.choices, answer: p.answer, why: p.why, source: lesson.title };
+    if (p) return { q: p.question || "What does this print?", code: p.code, choices: p.choices, answer: p.answer, why: p.why, refs: p.refs, source: lesson.title };
   }
   if (ref.kind === "quiz") {
     const mod = await loadModule(ref.moduleId);
@@ -233,7 +248,7 @@ export async function renderReview(root, curriculum, params) {
     const fb = h("div", {});
     stage.append(h("div", { class: "card" },
       h("div", { class: "muted" }, `${i + 1} of ${items.length}${q.drill ? " · drill" : ""} · from ${q.source}`),
-      h("h2", {}, q.q), q.code ? h("pre", { class: "code" }, q.code) : null,
+      h("h2", {}, q.q), refsFor(q), q.code ? h("pre", { class: "code" }, q.code) : null,
       h("div", { class: "choices" }, order.map((k) => {
         const b = h("button", { class: "choice mono", type: "button" }, q.choices[k]);
         b.addEventListener("click", () => {
@@ -256,7 +271,7 @@ async function randomDrill() {
   const lessons = await loadAllLessonMeta();
   const recs = store.getState().lessons;
   const pick = (filter) => Object.entries(lessons).filter(([id]) => filter(recs[id]))
-    .flatMap(([, meta]) => (meta.predict || []).map((p) => ({ q: p.question || "What does this print?", code: p.code, choices: p.choices, answer: p.answer, why: p.why, source: meta.title })));
+    .flatMap(([, meta]) => (meta.predict || []).map((p) => ({ q: p.question || "What does this print?", code: p.code, choices: p.choices, answer: p.answer, why: p.why, refs: p.refs, source: meta.title })));
   let pool = pick((r) => r && r.masteredAt);
   if (!pool.length) pool = pick((r) => Boolean(r));
   return pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
@@ -284,7 +299,7 @@ export async function renderTrack(root, curriculum, trackId, pageId) {
   root.append(h("div", { class: "crumbs" }, h("a", { href: `#/t/${trackId}` }, track.title)), h("h1", {}, page.title));
   if (page.due) root.append(h("p", { class: "meta" }, `Target date: ${page.due}`));
   const body = h("article", { class: "lesson-body" });
-  renderInto(body, await loadText(`${base}/${page.file}`));
+  await renderMd(body, await loadText(`${base}/${page.file}`));
   wireChecklists(body, page.id);
   root.append(body);
   if (page.quiz) await renderTrackQuiz(root, `${base}/${page.quiz}`, page);
@@ -318,7 +333,7 @@ async function renderTrackQuiz(root, file, page) {
     const form = h("div", { class: "quiz" });
     data.items.forEach((q, n) => {
       const fb = h("div", { class: "feedback" });
-      form.append(h("fieldset", { class: "card" }, h("legend", {}, `${n + 1}. ${q.q}`), q.code ? h("pre", { class: "code" }, q.code) : null,
+      form.append(h("fieldset", { class: "card" }, h("legend", {}, `${n + 1}. ${q.q}`), refsFor(q), q.code ? h("pre", { class: "code" }, q.code) : null,
         h("div", { class: "choices" }, q.choices.map((c, k) => {
           const b = h("button", { class: "choice", type: "button" }, c);
           b.addEventListener("click", () => {
@@ -382,7 +397,7 @@ export async function renderSimPage(root) {
     view.play();
   }
   const ref = h("div", { class: "card" });
-  renderInto(ref, await loadText("content/sim/reference.md"));
+  await renderMd(ref, await loadText("content/sim/reference.md"));
   root.append(ref);
 }
 
@@ -398,7 +413,7 @@ export async function renderProject(root, curriculum, moduleId) {
   root.append(h("div", { class: "crumbs" }, h("a", { href: `#/m/${moduleId}` }, mod.title)), h("h1", {}, `Project: ${p.title}`));
   if (!allMastered) { root.append(h("div", { class: "alert warn" }, "Master every lesson first.")); return; }
   const brief = h("article", { class: "lesson-body" });
-  renderInto(brief, await loadText(`${mod.base}/${p.brief}`));
+  await renderMd(brief, await loadText(`${mod.base}/${p.brief}`));
   root.append(brief);
   const [starter, tests, readme] = await Promise.all([loadText(`${mod.base}/${p.starter}`), loadText(`${mod.base}/${p.tests}`), loadText(`${mod.base}/${p.readme}`)]);
   const extraFiles = {};
@@ -425,7 +440,7 @@ export async function renderNoHands(root, curriculum, moduleId) {
   root.append(h("div", { class: "crumbs" }, h("a", { href: `#/m/${moduleId}` }, mod.title)), h("h1", {}, `No Hands checkpoint: ${nh.title}`));
   if (!allMastered) { root.append(h("div", { class: "alert warn" }, "Master every lesson first.")); return; }
   const brief = h("article", { class: "lesson-body" });
-  renderInto(brief, await loadText(`${mod.base}/${nh.brief}`));
+  await renderMd(brief, await loadText(`${mod.base}/${nh.brief}`));
   const [starter, tests] = await Promise.all([loadText(`${mod.base}/${nh.starter}`), loadText(`${mod.base}/${nh.tests}`)]);
   const timer = h("div", { class: "timer" }, "Press Start when you're ready. Closed book: no notes, no AI, no pasting.");
   const stage = h("div", {});

@@ -193,6 +193,8 @@ $$x = \mathrm{radians}(\Delta \text{lon}) \cdot R \cdot \cos(\text{lat}_0), \qqu
 where \( R \) = 6,371,000 m is the Earth's radius. (East-west distances shrink by \( \cos(\text{lat}_0) \) because meridians converge, as you saw in lesson 0.9. `math.cos` expects **radians**.)
 4. **Stage 4** `path_length(points)`: the sum of the straight-line distances between consecutive points, using `math.sqrt` (square root) on \( \Delta x^2 + \Delta y^2 \).
 
+You don't need to remember any GPS formats for this: the GGA field table, the fix-quality codes, and the ddmm latitude/longitude format are shown next to the challenge.
+
 **There are three planted bugs, in three different stages.** None of them crashes on the demo log. Your job is to find and fix all three with the method from this lesson, not to rewrite the pipeline. Submit early: the hidden test names say which stage each test probes (`stage 1: ...`, `stage 3: ...`), so the pattern of failing tests is your first measurement. Then reproduce each failure with a small input, probe with `f"{x=}"` or the tracer, and fix one bug at a time.
 
 {{challenge}}

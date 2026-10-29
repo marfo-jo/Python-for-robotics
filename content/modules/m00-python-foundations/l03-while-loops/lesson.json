@@ -42,16 +42,18 @@
                       "reveal": "It trips at scan 6. Scans 1 and 2 count the timer down to 1, but the heartbeat at scan 3 reloads it. Scans 4, 5, 6 count 2, 1, 0, so timer == 0 at scan 6, and break exits before scan += 1, so scan is still 6."}}
   ],
   "challenge": {
-    "task": "Write first_fix(lines, max_tries), which reads lines in order (at most max_tries, never past the end) and returns the first stripped GGA line with a real fix (7+ fields, quality not empty and not '0'), or '' on timeout; and settled_index(readings, threshold, needed), which returns the index where `needed` consecutive readings below threshold have been seen, or -1.",
+    "task": "Write first_fix(lines, max_tries), which reads lines in order (at most max_tries, never past the end) and returns the first stripped GGA line with a real fix (7+ fields, quality field at index 6 not empty and not '0'), or '' on timeout; and settled_index(readings, threshold, needed), which returns the index where `needed` consecutive readings below threshold have been seen, or -1. The GGA field table is shown here for reference.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": ["gga"]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "off-by-one loop counter (starts at 1 and runs to n inclusive)",
-    "report": "Bench log: \"Heading drifts slowly even when the robot sits still after calibration. With a calibration buffer of exactly n samples, startup crashes with IndexError.\" gyro_bias(samples, n) is supposed to average the FIRST n gyro samples to estimate the bias. Find the bug and fix it."
+    "report": "Bench log: \"Heading drifts slowly even when the robot sits still after calibration. With a calibration buffer of exactly n samples, startup crashes with IndexError.\" gyro_bias(samples, n) is supposed to average the FIRST n gyro samples to estimate the bias. Find the bug and fix it.",
+    "refs": []
   },
   "explainBack": {
     "prompt": "In your own words: what three things does every while loop need so it's guaranteed to end correctly? Use your first_fix loop as the example, and explain what would go wrong if you removed the `i < len(lines)` part of the condition.",

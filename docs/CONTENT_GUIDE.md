@@ -26,6 +26,32 @@ reference example. Match its depth and tone.
 - No MATLAB comparisons. Use electrical-engineering, embedded, PLC, and
   maintenance analogies (signals, frames, registers, scan cycles, diagnostics).
 
+## Rule: questions test the Python skill, never memorized protocol details
+
+The learner should never need to remember a field position, a code table, or a data
+format to answer a question. Every predict question, visual's predict-first question,
+challenge, find-the-bug, quiz item, project, and checkpoint must satisfy ONE of these:
+
+1. **It shows the reference next to it.** Add `"refs": ["gga", ...]` to the item.
+   The site renders the table beside the question. Tables live in
+   `content/reference/nmea.json` (`anatomy`, `checksum`, `gga`, `rmc`, `gsa`, `vtg`,
+   `gsv`, `fixquality`, `ddmm`, `utctime`). Explain-back prompts accept `refs` too. Add a new table there instead of
+   retyping facts in a question.
+2. **It states the needed facts in its own text** (for example, "fields[7] holds the
+   satellite count"). Mark predict/quiz items like this with `"selfContained": true`.
+3. **It needs no protocol knowledge at all**: pure Python behavior.
+
+"It was taught in an earlier lesson" is **not** enough on its own. Protocol details
+are reference material, not things to memorize. Lesson prose introduces a table the
+first time it's used (embed it with `{{ref:gga}}` on its own line) and says plainly
+that the learner doesn't have to memorize it.
+
+Challenges, bugs, projects, and No Hands checkpoints must always declare `refs`
+(use `[]` when nothing is needed); `verify.py` fails if the key is missing. A
+heuristic in `verify.py` also flags predict/quiz items that ask about fields or
+indexes without a reference. It can't catch everything, so authors must still check
+each item by hand.
+
 ## Teaching style
 
 - Explain **why**, not just how. Detailed explanations with many examples. Never
@@ -63,6 +89,7 @@ bug_fixed.py               # the fixed bug file: must PASS
 
 `{{example:ex1}}` `{{predict:p1}}` `{{viz:v1}}` `{{challenge}}` `{{bug}}` `{{explain}}`.
 Every item in lesson.json must be embedded exactly once. No unknown embeds.
+`{{ref:<table-id>}}` embeds a protocol reference table in the prose (any number of times).
 
 Math: use `$$...$$` (display) or `\( ... \)` (inline). **Never use single `$`**,
 because NMEA sentences start with `$`.

@@ -8,7 +8,7 @@ def first_fix(lines, max_tries):
     # lines is the list of raw lines from the serial port, in arrival order.
     # Read them one at a time from index 0, at most max_tries reads (and never
     # past the end of the list). Return the first line (stripped) that is a GGA
-    # sentence with a real fix: at least 7 fields, quality field not empty and
+    # sentence with a real fix: at least 7 fields, quality field (index 6) not empty and
     # not "0". If none arrives in time, return "".
     return "?"     # replace this with your loop
 

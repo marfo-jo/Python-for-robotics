@@ -121,6 +121,12 @@ The checksum is a number from 0 to 255, but the sentence writes it as **exactly 
 
 ## The algorithm
 
+The checksum rule itself is part of the NMEA protocol. Here it is as a reference table. **You don't need to memorize it**: every question, challenge, and bug that depends on it shows it right next to it. Your job is the Python that carries it out.
+
+{{ref:checksum}}
+
+In Python, that becomes:
+
 1. Strip the line (`\r\n` and spaces).
 2. Find the `*`. If there's no `*`, or the line doesn't start with `$`, it's not a valid sentence.
 3. XOR together every character **strictly between** the `$` and the `*`: indexes 1 up to (not including) the star. Start from 0.
@@ -188,7 +194,7 @@ Write two functions. Fill in the body; functions are covered properly in 0.6.
 - `xor_checksum(body)` returns the XOR of every character in `body` (the text between `$` and `*`) as exactly **two uppercase hex digits**, for example `"47"` or `"03"`. An empty body gives `"00"`.
 - `checksum_ok(sentence)` returns `True` only if the sentence (after stripping) starts with `$`, contains a `*`, and the checksum of the characters between them equals the hex text after the `*` (compared in uppercase). For anything else it returns `False`, and it must **never crash**.
 
-The hidden tests use real sentences, `\r\n` and spaces, lowercase hex, a corrupted character, a wrong or truncated checksum, a missing `*`, a missing `$`, and empty lines. Use what you've learned: string methods, slicing, conditionals, and `for` loops with `ord()`, `^`, and `format()`.
+The hidden tests use real sentences, `\r\n` and spaces, lowercase hex, a corrupted character, a wrong or truncated checksum, a missing `*`, a missing `$`, and empty lines. The checksum rule table is shown next to the challenge. Use what you've learned: string methods, slicing, conditionals, and `for` loops with `ord()`, `^`, and `format()`.
 
 {{challenge}}
 

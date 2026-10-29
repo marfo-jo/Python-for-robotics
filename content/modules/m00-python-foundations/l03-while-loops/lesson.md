@@ -102,6 +102,10 @@ Predict each output, then run it. Then **break** each example on purpose: delete
 
 **Example 3: robotics-realistic: retry until a valid fix arrives.** This is the core of a GPS driver's startup. Lines come in one at a time; garbage and non-GGA sentences are skipped; the loop stops on the first real fix (`break`) or after `max_tries` reads. Note the **two** limits in the condition: the try limit, and the end of the data.
 
+The example reads the fix quality with `line.split(",")[6]`, and a quality of `"0"` means "no fix yet". Both facts come from the GGA field table, repeated here as a reference (you don't need to memorize it; the challenge shows it too):
+
+{{ref:gga}}
+
 {{example:ex3}}
 
 **Example 4: how many scans until the wheel stops?** When you know the stopping condition but not the number of passes, a `while` loop counts them for you. This is the same as measuring settling time on a scope: how long until the signal drops below a threshold. The second half adds a safety limit and reports a timeout, which is what real control code must do. (`round(x, 1)` rounds to 1 decimal place for printing.)
@@ -138,7 +142,7 @@ A safety watchdog on a motor controller cuts power if the main controller stops 
 
 Write two functions, each with a `while` loop. Fill in the body; functions are covered properly in 0.6.
 
-- `first_fix(lines, max_tries)` reads `lines` in order, starting at index 0, **at most** `max_tries` reads and never past the end of the list. It returns the first line (stripped) that is a GGA sentence (starts with `$`, characters `[3:6]` are `GGA`) with a real fix: at least 7 fields, and the quality field (index 6) is not empty and not `"0"`. If no such line arrives in time, it returns `""`.
+- `first_fix(lines, max_tries)` reads `lines` in order, starting at index 0, **at most** `max_tries` reads and never past the end of the list. It returns the first line (stripped) that is a GGA sentence (starts with `$`, characters `[3:6]` are `GGA`) with a real fix: at least 7 fields, and the quality field (index 6) is not empty and not `"0"`. If no such line arrives in time, it returns `""`. (The GGA field table is shown next to the challenge.)
 - `settled_index(readings, threshold, needed)` returns the index of the reading at which the sensor has been **strictly below** `threshold` for `needed` readings **in a row** (`needed` is 1 or more). A reading at or above the threshold resets the run. If it never settles, return `-1`.
 
 Inside a function, `return` exits the loop and the function at once, so you can use it instead of `break`. The hidden tests include blank lines, a truncated sentence from power-up, a fix on exactly the last allowed read, an empty list, `max_tries = 0`, a run that gets interrupted, and a reading exactly at the threshold.

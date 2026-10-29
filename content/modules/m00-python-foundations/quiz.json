@@ -54,10 +54,10 @@
       "code": "line = \"$GPGGA,,,,,,0,,,,,,,,*66\\r\\n\"\nprint(repr(line[-2:]))",
       "checkOutput": true,
       "choices": [
-        "'47'",
+        "'66'",
         "'\\r\\n'",
-        "'7\\r'",
-        "'*47'"
+        "'6\\r'",
+        "'*66'"
       ],
       "answer": 1,
       "why": "A line read from a serial port still ends in the invisible '\\r\\n'. The last two characters are those, not the checksum. strip() first."
@@ -197,7 +197,7 @@
     {
       "id": "f-xor-blind",
       "topic": "0.4 for loops and checksums",
-      "q": "An 8-bit XOR checksum (like NMEA's) will NOT detect which corruption?",
+      "q": "NMEA protects each sentence with an 8-bit XOR checksum (rule shown in the table). Which corruption will that XOR NOT detect?",
       "choices": [
         "The same bit flipped in two different characters",
         "A single flipped bit anywhere between '$' and '*'",
@@ -205,20 +205,27 @@
         "A comma replaced by a period"
       ],
       "answer": 0,
-      "why": "XOR is per-bit parity. Two flips in the same bit position cancel out (1 ^ 1 = 0), so the checksum still matches. Any single-bit error is always caught."
+      "why": "XOR is per-bit parity. Two flips in the same bit position cancel out (1 ^ 1 = 0), so the checksum still matches. Any single-bit error is always caught.",
+      "refs": [
+        "checksum"
+      ]
     },
     {
       "id": "f-xor-range",
       "topic": "0.4 for loops and checksums",
-      "q": "Which characters of '$GPGGA,...,M,,*47' go into the XOR checksum?",
+      "q": "The checksum covers every character strictly BETWEEN '$' and '*' (see the checksum table). With s = '$GPGGA,...,M,,*47' and star = s.find('*'), which slice gives exactly those characters?",
       "choices": [
-        "Everything between '$' and '*', not including either",
-        "Everything from '$' to '*', including both",
-        "Every character in the line, including '*47'",
-        "Only the comma-separated fields after the sentence type"
+        "s[1:star]",
+        "s[0:star]",
+        "s[1:star + 1]",
+        "s[0:star + 1]"
       ],
       "answer": 0,
-      "why": "The NMEA rule is: XOR every character strictly between '$' and '*'. Including the '$' (0x24) or the '*' changes the result and every sentence looks corrupted."
+      "why": "A slice includes its start and stops BEFORE its stop. s[1:star] starts after the '$' (index 0) and stops just before the '*' (index star). s[0:star] would include the '$', and star + 1 would include the '*': either one changes the XOR and makes every sentence look corrupted.",
+      "refs": [
+        "checksum"
+      ],
+      "selfContained": true
     },
     {
       "id": "l-index",
@@ -508,15 +515,21 @@
     {
       "id": "fs-lon-width",
       "topic": "0.9 f-strings and units",
-      "q": "Why is the NMEA longitude field '07105.352' sliced as text[:3] for degrees, not text[:2]?",
+      "q": "NMEA longitude is dddmm.mmmm: THREE degree digits, then minutes (see the table). This code slices it like a 2-digit latitude. What does it print? (If it raises, pick the exception type.)",
+      "code": "text = \"07105.352\"\ndeg = int(text[:2])\nmins = float(text[2:])\nprint(deg, mins)",
+      "checkOutput": true,
       "choices": [
-        "Longitude goes up to 180, so it has 3 degree digits (dddmm.mmmm); latitude only goes to 90 (ddmm.mmmm)",
-        "The first character is a sign digit",
-        "NMEA pads every number with one leading zero",
-        "It's a receiver-specific format; most use text[:2]"
+        "7 105.352",
+        "71 5.352",
+        "71 05.352",
+        "ValueError"
       ],
       "answer": 0,
-      "why": "Latitude is ddmm.mmmm (0 to 90 degrees), longitude is dddmm.mmmm (0 to 180). Slicing longitude with [:2] gives 7 instead of 71 degrees. The sign comes from the N/S/E/W field, not the digits."
+      "why": "text[:2] is '07', so deg is 7, and text[2:] is '105.352', so mins is 105.352. int() and float() happily accept both, so nothing crashes: the numbers are just wrong. Minutes over 60 are the giveaway. For dddmm.mmmm, slice at 3: text[:3] and text[3:] give 71 and 5.352.",
+      "refs": [
+        "ddmm"
+      ],
+      "selfContained": true
     },
     {
       "id": "fi-count-lines",

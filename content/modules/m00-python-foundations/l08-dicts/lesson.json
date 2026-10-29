@@ -45,7 +45,7 @@
   "predict": [
     {
       "id": "p1",
-      "question": "The receiver didn't send an HDOP field, so the dict has no 'hdop' key. What does this print?",
+      "question": "The dict below has no 'hdop' key (the receiver left that value out). What does this print?",
       "code": "fix = {\"quality\": 1, \"satellites\": 8}\nprint(fix[\"hdop\"])",
       "choices": [
         "None",
@@ -54,7 +54,8 @@
         "{}"
       ],
       "answer": 2,
-      "why": "Square-bracket lookup on a missing key raises KeyError. Python doesn't invent a value for you. If a key might be missing, use fix.get(\"hdop\"), which gives None, or fix.get(\"hdop\", 99.9) for your own default. Or check first with \"hdop\" in fix."
+      "why": "Square-bracket lookup on a missing key raises KeyError. Python doesn't invent a value for you. If a key might be missing, use fix.get(\"hdop\"), which gives None, or fix.get(\"hdop\", 99.9) for your own default. Or check first with \"hdop\" in fix.",
+      "selfContained": true
     },
     {
       "id": "p2",
@@ -111,13 +112,17 @@
     "task": "Write gga_to_dict(sentence), which returns a dict of time (str), quality (int), satellites (int), hdop (float), and altitude (float) from a GGA sentence, leaving out keys for empty fields and returning None for non-GGA or cut-off input, and count_types(sentences), which returns a dict mapping each sentence type (talker-independent) to its count, skipping blank lines and lines without '$'.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "gga"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "dict key case mismatch ('gga' vs 'GGA')",
-    "report": "Overnight logging run: \"The logger ran for eight hours and the fix log is empty. handle() returns None for every single sentence, even $GPGGA lines with valid checksums. No errors, no crashes.\" Find the bug and fix it."
+    "report": "Overnight logging run: \"The logger ran for eight hours and the fix log is empty. handle() returns None for every single sentence, even $GPGGA lines with valid checksums. No errors, no crashes.\" Find the bug and fix it.",
+    "refs": []
   },
   "explainBack": {
     "prompt": "In your own words: why did the dispatcher return None for every sentence without raising any error? What's the difference between fix[\"hdop\"] and fix.get(\"hdop\", 0.0) when the key is missing? And how does counts[kind] = counts.get(kind, 0) + 1 count correctly the first time a type appears?",

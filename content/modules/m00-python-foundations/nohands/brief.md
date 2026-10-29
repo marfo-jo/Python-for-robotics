@@ -4,6 +4,8 @@
 
 This checkpoint proves that the Module 0 skills are yours, not the course's. If you don't finish in 30 minutes, keep going until the tests pass, note how long it took, and come back in a few days to do it again from a blank file. Passing slowly is still passing. Passing because you looked something up isn't, and only you know which one happened.
 
+**Protocol facts are not part of the test.** The RMC field layout, the latitude/longitude format, and the checksum rule are printed on this page. Use them as much as you like: this checkpoint tests your Python, not your memory of NMEA.
+
 ## The task
 
 Write one function:
@@ -31,6 +33,12 @@ The RMC ("recommended minimum") fields, numbered after you `split(",")` the text
 | 8 | `45.10` | course over ground, degrees (can be **empty** when the receiver isn't moving) |
 | 9 | `281026` | date, ddmmyy |
 | 10 and on | | magnetic variation and mode (ignore them) |
+
+How to turn ddmm.mmmm / dddmm.mmmm into signed decimal degrees, and the checksum rule:
+
+{{ref:ddmm}}
+
+{{ref:checksum}}
 
 ### Return `None` when
 

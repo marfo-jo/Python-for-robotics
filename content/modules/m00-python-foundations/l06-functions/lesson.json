@@ -45,7 +45,7 @@
   "predict": [
     {
       "id": "p1",
-      "question": "This helper prints the satellite field. What does the whole program print?",
+      "question": "In a split GGA sentence, fields[7] holds the satellite count. This helper prints that field. What does the whole program print?",
       "code": "def sats(fields):\n    print(fields[7])\n\nn = sats([\"$GPGGA\", \"152305.00\", \"4220.1234\", \"N\", \"07105.5678\", \"W\", \"1\", \"09\"])\nprint(n)",
       "choices": [
         "09\n09",
@@ -54,7 +54,8 @@
         "9\nNone"
       ],
       "answer": 1,
-      "why": "Calling sats() runs its print, so '09' appears on the screen. But the function has no return, so Python hands back None, and that's what n holds. print shows a value to a human; return hands a value to the code that called the function. It's '09', not 9, because the field is still text: nobody called int()."
+      "why": "Calling sats() runs its print, so '09' appears on the screen. But the function has no return, so Python hands back None, and that's what n holds. print shows a value to a human; return hands a value to the code that called the function. It's '09', not 9, because the field is still text: nobody called int().",
+      "selfContained": true
     },
     {
       "id": "p2",
@@ -112,13 +113,18 @@
     "task": "Write is_gga(sentence), which validates a GGA sentence (any talker, stripped, starts with '$', at least 15 fields), and parse_gga(sentence, min_sats=4), which uses is_gga and returns [utc_time (str), fix_quality (int), satellites (int), altitude (float)], or None for non-GGA input, no fix (quality 0), or too few satellites.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "gga",
+      "fixquality"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "print instead of return (caller gets None)",
-    "report": "Bench test of the GPS logger: \"The console prints the right satellite count (9) every second, so the parsing works. But the fix filter crashes with TypeError: '>=' not supported between instances of 'NoneType' and 'int'.\" good_enough() should return True when a fix used at least `minimum` satellites. Find the bug and fix it."
+    "report": "Bench test of the GPS logger: \"The console prints the right satellite count (9) every second, so the parsing works. But the fix filter crashes with TypeError: '>=' not supported between instances of 'NoneType' and 'int'.\" good_enough() should return True when a fix used at least `minimum` satellites. Find the bug and fix it.",
+    "refs": []
   },
   "explainBack": {
     "prompt": "In your own words: what is the difference between print and return inside a function? Why did the buggy satellites() show the right number on the screen but still break good_enough()? And why can't code outside a function see a variable created inside it?",

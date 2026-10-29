@@ -45,7 +45,7 @@
   "predict": [
     {
       "id": "p1",
-      "question": "You try to correct the latitude in a fix record. What happens?",
+      "question": "fix is a (time, lat, lon) tuple, and you try to overwrite its latitude, item 1. What happens?",
       "code": "fix = (\"123519\", 48.1173, 11.5167)\nfix[1] = 0.0\nprint(fix)",
       "choices": [
         "('123519', 0.0, 11.5167)",
@@ -54,7 +54,8 @@
         "IndexError"
       ],
       "answer": 2,
-      "why": "Tuples are immutable, like strings: you can't assign to an item. Python raises TypeError: 'tuple' object does not support item assignment, and print never runs. To 'change' a record, build a new tuple: fix = (fix[0], 0.0, fix[2]). Index 1 exists, so it isn't an IndexError."
+      "why": "Tuples are immutable, like strings: you can't assign to an item. Python raises TypeError: 'tuple' object does not support item assignment, and print never runs. To 'change' a record, build a new tuple: fix = (fix[0], 0.0, fix[2]). Index 1 exists, so it isn't an IndexError.",
+      "selfContained": true
     },
     {
       "id": "p2",
@@ -112,13 +113,17 @@
     "task": "Write fix_record(sentence), which returns a (utc_time, lat, lon) tuple from a GGA sentence (any talker; signed decimal degrees via the provided to_degrees) or None for non-GGA, cut-off, or empty-position input, and bounding_box(records), which returns ((min_lat, min_lon), (max_lat, max_lon)) for a list of records, or None for an empty list.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "gga"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "lat/lon swapped when unpacking a tuple",
-    "report": "Field test, Centennial Common: \"The robot is parked in the middle of the fenced test area, but inside_fence() reports False every second, so the mission planner refuses to start. position() prints sensible numbers.\" Find the bug and fix it. position() must keep returning (lat, lon)."
+    "report": "Field test, Centennial Common: \"The robot is parked in the middle of the fenced test area, but inside_fence() reports False every second, so the mission planner refuses to start. position() prints sensible numbers.\" Find the bug and fix it. position() must keep returning (lat, lon).",
+    "refs": []
   },
   "explainBack": {
     "prompt": "In your own words: what does lat, lon = position(sentence) actually do, step by step? Why did writing lon, lat = position(sentence) put the robot 'outside' the fence without any error? And why is a tuple a better container than a list for a single (time, lat, lon) fix?",
@@ -131,7 +136,7 @@
   },
   "hints": {
     "challenge": [
-      "fix_record is your parse_gga from lesson 0.6 with a different output: which fields hold latitude and its hemisphere, and longitude and its hemisphere? What must you check before calling to_degrees? For bounding_box: what's a safe starting value for a running minimum, if 0 might not be in the data at all?",
+      "fix_record is your parse_gga from lesson 0.6 with a different output: which fields hold latitude and its hemisphere, and longitude and its hemisphere? (Look them up in the GGA table shown with the challenge.) What must you check before calling to_degrees? For bounding_box: what's a safe starting value for a running minimum, if 0 might not be in the data at all?",
       "fix_record: strip and split; return None unless it's GGA with at least 15 fields and non-empty lat (field 2) and lon (field 4). Then return a TUPLE of the time text, to_degrees(field 2, field 3), and to_degrees(field 4, field 5), in that order. bounding_box: return None for an empty list; otherwise unpack the FIRST record to start all four running values, then loop with for time, lat, lon in records and update each min and max.",
       "fix_record(sentence): fields = split(strip(sentence), ','); if characters 3 to 6 of fields[0] aren't 'GGA' or there are fewer than 15 fields: return None; if fields[2] or fields[4] is empty: return None; return (fields[1], to_degrees(fields[2], fields[3]), to_degrees(fields[4], fields[5])). bounding_box(records): if records is empty: return None; time, min_lat, min_lon = records[0]; max_lat, max_lon = min_lat, min_lon; for each time, lat, lon in records: update min_lat, max_lat, min_lon, max_lon; return ((min_lat, min_lon), (max_lat, max_lon))."
     ],

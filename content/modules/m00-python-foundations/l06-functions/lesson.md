@@ -66,6 +66,10 @@ n = sats(line)       # ...but n is None
 n >= 4               # TypeError: '>=' not supported between 'NoneType' and 'int'
 ```
 
+(Index 7 is the satellite count of a GGA sentence. Field positions are reference material, not something to memorize: this lesson's GGA examples and the challenge use this table, and the challenge shows it again.)
+
+{{ref:gga}}
+
 The screen shows the right number, so the function *looks* like it works. Then a completely different line crashes. In hardware terms, you wired the result to a debug LED instead of to the output pin: you can see it, but nothing downstream receives it.
 
 To check for `None`, use `is None` (or `is not None`): `if result is None:`. You'll use this a lot, because returning `None` is the standard way for a parser to say "this input was not usable."
@@ -79,7 +83,7 @@ def rmc_status(sentence):
     if sentence.strip()[3:6] != "RMC":
         return None            # not our sentence: stop here
     fields = sentence.strip().split(",")
-    return fields[2]
+    return fields[2]           # RMC status letter (see the RMC table in Example 4)
 ```
 
 Read it top to bottom like a checklist: "if this is wrong, give up; if that is wrong, give up; otherwise, here's the answer." This is exactly how you'll write `parse_gga`.
@@ -140,7 +144,11 @@ Read each example, **predict what it prints**, then run it. Change things and re
 
 {{example:ex3}}
 
-**Example 4: robotics-realistic: small functions that compose.** An RMC sentence carries a status letter: `A` (active, the fix is valid) or `V` (void, ignore it). Three tiny functions, each built on the one before, decide whether a line is usable, and they survive a cut-off line.
+**Example 4: robotics-realistic: small functions that compose.** An RMC sentence carries a status letter at index 2: `A` (active, the fix is valid) or `V` (void, ignore it). You don't need to memorize that; it's in the RMC reference table:
+
+{{ref:rmc}}
+
+Three tiny functions, each built on the one before, decide whether a line is usable, and they survive a cut-off line.
 
 {{example:ex4}}
 

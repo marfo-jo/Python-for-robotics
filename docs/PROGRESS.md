@@ -62,6 +62,20 @@ Browser runtime: Pyodide 314.0.7 (Python 3.14). Full pin list in `vendor/VERSION
 Per-lesson local checks: 0.1: 29 · 0.2: 30 · 0.3: 30 · 0.4: 30 · 0.5: 31 · 0.6: 31 · 0.7: 31 · 0.8: 31 · 0.9: 30 · 0.10: 30 · 0.11: 31 · 0.12: 29.
 Each challenge has 4 known-wrong solutions that fail, and the reference passes.
 
+### Content fix (2026-10-29): no untaught protocol knowledge
+
+Learner-reported bug: a lesson 0.1 question asked for the index of the GGA fix-quality field, but the field layout hadn't been shown anywhere.
+
+- **New rule:** questions test the Python skill, never memorized protocol details (CONTENT_GUIDE.md).
+- **Shared reference tables** in `content/reference/nmea.json`: anatomy, checksum, gga, rmc, gsa, vtg, gsv, fixquality (codes 0 to 8), ddmm, utctime. They appear next to any item that declares `refs`, and in prose and briefs via `{{ref:id}}`.
+- **The GGA table** is now in lesson 0.1, where fields are first used.
+- **Audit:** every Module 0 lesson item, all 48 quiz items, the project, and the No Hands checkpoint. About 60 items were fixed with a reference, made self-contained, or rewritten to test a Python skill (fs-lon-width and f-xor-range were pure recall).
+- **`verify.py` enforces the rule:**
+  - Challenges, bugs, the project, and the No Hands checkpoint must declare `refs`.
+  - Every ref id must exist.
+  - A heuristic flags field or index questions that have no reference.
+- **Re-verified:** 672/672 local checks; the Pyodide self-test and the UI self-test pass, including checks that the reference tables render.
+
 ### Not yet verified (needs the learner's VM or hardware)
 
 - [ ] C1/C2: run `bash local/c-embedded/check.sh` in the Ubuntu VM on the answer-key files. They pass the avr-gcc syntax check, but no output has been checked yet. Two outputs assume gcc 11 behavior: int16 wraparound and `__STDC_VERSION__ = 201112`.

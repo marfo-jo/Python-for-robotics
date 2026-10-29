@@ -19,6 +19,12 @@ Every line of the file goes into **exactly one** of these four buckets. Apply th
 | `"bad_checksum"` | Well-formed, but the XOR of every character between `$` and `*` doesn't match the two hex digits. |
 | `"valid"` | The checksum matches. Hex digits may be lowercase: `*7c` matches a computed `7C`. |
 
+The checksum rule and the parts of a sentence, as references (you don't need to memorize them):
+
+{{ref:checksum}}
+
+{{ref:anatomy}}
+
 Only **valid** sentences count toward any statistic below. A corrupted sentence might claim 13 satellites; you can't trust anything in it.
 
 ## Required functions
@@ -55,6 +61,12 @@ A reminder of the GGA fields (index after `split(",")` on the text between `$` a
 GPGGA,140000.00,4220.38800,N,07105.35200,W,1,06,1.37,12.3,M,-33.1,M,,
   0       1         2      3      4      5 6  7   8    9  10  11  12 13 14
 ```
+
+The full GGA field table and the fix-quality codes (keep them open while you code; nobody memorizes these):
+
+{{ref:gga}}
+
+{{ref:fixquality}}
 
 ### `format_summary(summary) -> str`
 
@@ -121,5 +133,9 @@ Before you write any code, open [gps_log.txt](content/data/gps_log.txt) (it's al
 ## Stretch goals (not graded)
 
 - Accept the log path on the command line (`sys.argv[1]`), defaulting to `gps_log.txt`.
-- Add the total distance travelled, using the RMC speed (knots) and the 1 s spacing.
+- Add the total distance travelled, using the RMC speed (knots) and the 1 s spacing. 1 knot = 1852 m per hour = 0.514444 m/s.
 - Report the longest gap without a fix, in seconds, by converting `hhmmss.ss` to seconds since midnight.
+
+{{ref:rmc}}
+
+{{ref:utctime}}

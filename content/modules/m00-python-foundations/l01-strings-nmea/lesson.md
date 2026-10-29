@@ -64,6 +64,19 @@ You **cannot change** a string in place. `sentence[0] = "X"` raises a `TypeError
 
 Notice in `split`: two commas in a row produce an **empty string** `''`. GPS receivers send empty fields all the time, for example when there's no fix yet. Your code must expect them.
 
+### The $GPGGA field layout (a reference, not something to memorize)
+
+After `sentence.split(",")`, each field of a GGA sentence sits at a fixed **index**. Index 0 is `'$GPGGA'` itself, so the first data field is index 1. Here's the full layout:
+
+{{ref:gga}}
+
+**You don't need to memorize this table.** Real engineers keep the protocol spec open while they code, and so will you: any question, challenge, or bug in this course that depends on a field position shows the table right next to it. What you *do* need to know is the Python skill: `split(",")` gives you a list, and you read a field with its index, for example `fields[6]` for fix quality, using the table to look up the number.
+
+Two facts that matter for your code (both are in the table's notes):
+
+- Empty fields **keep their position**. A no-fix sentence still has 15 items; some are just `''`. That's why `fields[6]` is always fix quality.
+- The checksum is glued to the **last** field, so the last item of the split list contains `*`.
+
 ## Worked examples
 
 Read each example, **predict what it prints**, then run it. Change things and re-run. Breaking the examples on purpose is the fastest way to learn.

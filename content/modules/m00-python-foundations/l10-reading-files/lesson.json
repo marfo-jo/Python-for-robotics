@@ -98,16 +98,23 @@
     }
   ],
   "challenge": {
-    "task": "Write load_sentences(path) that opens a GPS log with `with open(path, encoding='utf-8')`, returns (sentences, errors): the stripped, checksum-valid NMEA sentences in file order, and the count of non-blank lines rejected (junk, bad checksum, truncated). Blank lines are skipped and are not errors.",
+    "task": "Write load_sentences(path) that opens a GPS log with `with open(path, encoding='utf-8')`, returns (sentences, errors): the stripped, checksum-valid NMEA sentences in file order, and the count of non-blank lines rejected (junk, bad checksum, truncated). Blank lines are skipped and are not errors. The checksum rule is shown in the NMEA checksum table next to the challenge.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "checksum",
+      "anatomy"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "file read twice (exhausted file iterator)",
-    "report": "Lab 4 analysis script: \"The summary for every log file says 'lines: 1184, GGA fixes: 0'. Opening the same file in Notepad shows hundreds of $GPGGA lines, so the receiver definitely logged fixes. The line count looks right.\" log_summary(path) should return (non-blank lines, GGA sentences). Find the bug and fix it."
+    "report": "Lab 4 analysis script: \"The summary for every log file says 'lines: 1184, GGA fixes: 0'. Opening the same file in Notepad shows hundreds of $GPGGA lines, so the receiver definitely logged fixes. The line count looks right.\" log_summary(path) should return (non-blank lines, GGA sentences). A GGA sentence has 'GGA' as its sentence type, right after the 2-letter talker ID (see the sentence anatomy table). Find the bug and fix it.",
+    "refs": [
+      "anatomy"
+    ]
   },
   "explainBack": {
     "prompt": "In your own words: walk through how your load_sentences reads a log file. Why do you use `with`, why must every line be stripped, how does your code tell a blank line from a bad one, and why does a truncated last line end up counted as an error? Finally, why is the path a parameter instead of a file name written inside the function?",

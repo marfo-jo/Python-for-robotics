@@ -37,6 +37,7 @@
     "tests": "project/test_project.py",
     "readme": "project/README_template.md",
     "exportName": "nmea_analyzer.py",
+    "refs": ["anatomy", "checksum", "gga", "fixquality"],
     "dataFiles": {"gps_log.txt": "content/data/gps_log.txt"},
     "hints": ["Break it into small functions you already wrote in the lessons: validate one line, parse one GGA, then loop over lines.", "Count three things as you loop: total lines, lines with a bad checksum or format, and valid GGA fixes by quality. A dict is perfect for counting by quality.", "Pseudocode: for each line in the file: strip it; skip if blank; if checksum invalid: bad += 1, continue; if it's GGA: parse it, update counts and min/max satellites. After the loop, build and return the summary dict."],
     "resumeBullet": "Wrote a Python NMEA 0183 log analyzer that validates XOR checksums, parses GGA fixes, and reports fix-quality statistics, tested with N pytest cases including corrupted and empty-field input."
@@ -46,6 +47,7 @@
     "brief": "nohands/brief.md",
     "starter": "nohands/starter.py",
     "tests": "nohands/test_nohands.py",
+    "refs": ["rmc", "ddmm", "checksum"],
     "minutes": 30
   },
   "bridges": {"robots": "bridge-ros.md", "cpp": "bridge-cpp.md"}

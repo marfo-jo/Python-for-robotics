@@ -41,6 +41,8 @@ for line in log_lines:
     sats.append(int(fields[7]))   # int() turns the text "09" into the number 9
 ```
 
+(In a GGA sentence, index 7 holds the satellite count. You don't need to remember that: the full field table is in the next section, and any question that needs it shows it.)
+
 `append` adds one item to the **end**. It changes the list itself and returns nothing, so write `sats.append(x)`, never `sats = sats.append(x)` (that would replace your list with `None`, Python's "no value" object, which you'll meet properly in lesson 0.6).
 
 ### 2. Indexing: the last index is `len - 1`
@@ -54,6 +56,10 @@ negative:  -15       -14        -13     -12   ...   -1
 ```
 
 A $GPGGA sentence has **15** fields, so the valid indexes are **0 to 14**. `fields[15]` doesn't exist, and Python raises **`IndexError`**. That's the classic off-by-one: `len()` counts items starting from 1, but indexes start from 0. The last item is always `fields[len(fields) - 1]`, which is exactly what `fields[-1]` means.
+
+Here's the GGA field table from 0.1 again, as a **reference, not something to memorize**. This lesson's examples and challenge read the satellite count (index 7), HDOP (index 8), and altitude (index 9), and the challenge shows this table next to it:
+
+{{ref:gga}}
 
 **Why this matters on a robot.** Serial lines get cut off: the receiver resets, a buffer overflows, or you start reading halfway through a sentence. A cut-off line like `"$GPGGA,152310.00,4220.12"` splits into only **3** fields. If your parser blindly reads `fields[7]`, it crashes, and a crashed GPS driver means a robot with no position. So you **check the length first**:
 
@@ -203,7 +209,7 @@ And here is the "find the worst fix" pattern, step by step. Watch `i` and `h` mo
 
 Write two functions. (Fill in each body; functions are covered properly in lesson 0.6.)
 
-- `satellite_counts(sentences)`: `sentences` is a list of NMEA lines. Return a **list of ints**: the satellite count (field 7) of each GGA sentence, in order. Any talker counts (`$GPGGA`, `$GNGGA`, ...). **Skip** a line if it isn't GGA, if it's too short to have a satellites field (cut off), or if its satellites field is empty. A no-fix sentence that says `00` satellites counts as `0`. Lines may have stray spaces or `\r\n`.
+- `satellite_counts(sentences)`: `sentences` is a list of NMEA lines. Return a **list of ints**: the satellite count (field 7) of each GGA sentence, in order. Any talker counts (`$GPGGA`, `$GNGGA`, ...). **Skip** a line if it isn't GGA, if it's too short to have a satellites field (cut off), or if its satellites field is empty. A no-fix sentence that says `00` satellites counts as `0`. Lines may have stray spaces or `\r\n`. (The GGA field table is shown next to the challenge.)
 - `last_n(readings, n)`: return a **new** list with the newest `n` readings (the end of the list). If there are fewer than `n`, return them all. `last_n(readings, 0)` is `[]`. Don't change `readings`.
 
 The hidden tests include cut-off lines, empty fields, other sentence types, and a check that your result isn't an alias of the input.

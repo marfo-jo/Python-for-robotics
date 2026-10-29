@@ -153,18 +153,17 @@ def describe(quality):
     return "something else"
 ```
 
-## GPS fix quality codes (field 6 of GGA)
+## Reference: GGA fields and fix quality codes (not something to memorize)
 
-| Code | Meaning | Typical accuracy |
-|---|---|---|
-| `0` | no fix (don't use the position!) | none |
-| `1` | GPS fix (standard, single receiver) | a few meters |
-| `2` | DGPS fix (corrections from a base station or SBAS) | about 1 m |
-| `4` | RTK fixed (carrier-phase, integer ambiguities solved) | about 2 cm |
-| `5` | RTK float (carrier-phase, not yet solved) | decimeters |
-| `6` | estimated (dead reckoning) | drifts over time |
+The examples, the trace, and the challenge read two fields of a GGA sentence: the fix quality and the satellite count. You met the field layout in 0.1. Here it is again, followed by what each fix quality code means:
 
-Codes `3`, `7`, and `8` exist too (PPS, manual input, simulation), but you'll rarely see them.
+{{ref:gga}}
+
+{{ref:fixquality}}
+
+**You don't need to memorize either table.** They're reference material, like a datasheet you keep open next to the code. Every question, challenge, and bug in this course that depends on a field position or a code shows the table right next to it. What you *do* need is the Python skill: `fields[6]` is **text** like `"1"`, so you compare it with text, and you branch on it with an `if`/`elif` chain.
+
+For context only (no question depends on it): a plain GPS fix is good to a few meters, DGPS to about 1 m, RTK fixed to about 2 cm, and RTK float to decimeters. Rarer codes (`3`, `7`, `8`) exist too, which is why a robust classifier ends with an `else` that catches any code it doesn't recognize.
 
 ## Worked examples
 
@@ -223,7 +222,7 @@ Write two functions. Fill in the body; functions are covered properly in 0.6.
 - `fix_status(sentence)` returns one of `"not GGA"`, `"no data"` (quality field empty), `"no fix"`, `"GPS"`, `"DGPS"`, `"RTK fixed"`, `"RTK float"`, or `"other"` (any other code).
 - `is_usable(sentence, min_sats)` returns `True` only when the sentence is GGA, the quality is a real fix (`"1"`, `"2"`, `"4"`, or `"5"`), the satellite field is not empty, and there are **at least** `min_sats` satellites. Otherwise it returns `False`, and it must never crash.
 
-A sentence counts as GGA if, after stripping, it starts with `$` and characters `[3:6]` are `GGA` (so `$GPGGA` and `$GNGGA` both count). The hidden tests use whitespace, `\r\n`, empty fields, a missing `$`, non-GGA sentences, and exact boundary values. Use only what you've learned so far: string methods, slicing, `split`, `int()`, and conditionals.
+A sentence counts as GGA if, after stripping, it starts with `$` and characters `[3:6]` are `GGA` (so `$GPGGA` and `$GNGGA` both count). The GGA field table and the fix quality table are shown next to the challenge: look up the field positions there. The hidden tests use whitespace, `\r\n`, empty fields, a missing `$`, non-GGA sentences, and exact boundary values. Use only what you've learned so far: string methods, slicing, `split`, `int()`, and conditionals.
 
 {{challenge}}
 

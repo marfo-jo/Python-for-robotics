@@ -44,24 +44,27 @@
      "props": {"code": "line = \"$GPVTG*52\"\nstar = line.find(\"*\")\ntotal = 0\nfor i in range(1, star):\n    total ^= ord(line[i])\nprint(format(total, \"02X\"), line[star + 1:])\nprint(format(total, \"02X\") == line[star + 1:])"},
      "notice": "Watch `i` in the variables table: it goes 1, 2, 3, 4, 5 and stops. Index 0 (the '$') and index 6 (the '*') are never visited, because range(1, star) starts at 1 and stops BEFORE star. `total` changes on every pass and never goes above 127, because XOR never carries.",
      "predictFirst": {"question": "star is 6 here. Which values of i will the loop visit? Will it ever look at the '$' or the '*'?",
-                      "reveal": "i = 1, 2, 3, 4, 5. range(1, 6) starts at 1 (skipping the '$' at index 0) and stops before 6 (the '*'). That's exactly the body 'GPVTG', and its checksum is 52."}}
+                      "reveal": "i = 1, 2, 3, 4, 5. range(1, 6) starts at 1 (skipping the '$' at index 0) and stops before 6 (the '*'). That's exactly the characters between them, 'GPVTG', which is what the checksum rule asks for, and its checksum is 52.",
+                      "refs": ["checksum"]}}
   ],
   "challenge": {
-    "task": "Write xor_checksum(body), which returns the XOR of all characters as exactly 2 uppercase hex digits, and checksum_ok(sentence), which returns True only if the sentence starts with '$', has a '*', and its checksum matches, handling whitespace, \\r\\n and lowercase hex and never crashing.",
+    "task": "Write xor_checksum(body), which returns the XOR of all characters as exactly 2 uppercase hex digits, and checksum_ok(sentence), which returns True only if the sentence starts with '$', has a '*', and its checksum matches, handling whitespace, \\r\\n and lowercase hex and never crashing. The checksum rule is shown here for reference.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": ["checksum"]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "checksum includes the '$' start marker",
-    "report": "Bench log: \"The GPS module ignores every configuration command we send. The update rate stays at the default. A logic analyzer on TX shows we send $PMTK220,1000*3B but the datasheet example says *1F.\" with_checksum(body) builds a complete command from its body. Find the bug and fix it."
+    "report": "Bench log: \"The GPS module ignores every configuration command we send. The update rate stays at the default. A logic analyzer on TX shows we send $PMTK220,1000*3B but the datasheet example says *1F.\" with_checksum(body) builds a complete command from its body. PMTK commands use the same checksum rule as NMEA sentences (shown below). Compare the rule with what the loop actually does, then find the bug and fix it.",
+    "refs": ["checksum"]
   },
   "explainBack": {
-    "prompt": "In your own words: why does the checksum loop skip the '$' and stop before the '*', why must you print the result with format(total, \"02X\") instead of hex(total), and what kind of transmission error can the XOR checksum NOT detect?",
+    "prompt": "In your own words: the checksum rule says to XOR only the characters strictly between '$' and '*'. How does range(1, star) (or line[1:star]) pick out exactly those characters, and what happens to a valid sentence if the loop includes the '$'? Also: why must you print the result with format(total, \"02X\") instead of hex(total), and what kind of transmission error can the XOR checksum NOT detect?",
     "rubric": [
-      "Says the NMEA checksum is defined over the characters strictly between '$' and '*'; including either one changes the XOR (the '$' flips bits 0x24) and every valid sentence would be rejected",
+      "Explains the indexes: the '$' is at index 0 and the '*' is at index star, so range(1, star) starts after the '$' and stops before the '*' (half-open); including the '$' XORs in one extra character (0x24), so the computed value changes and every valid sentence would be rejected",
       "Explains that the checksum is compared as text: exactly 2 uppercase hex digits, so it must be zero-padded ('03', not '3') and not have the '0x' prefix that hex() adds; lowercase input must be uppercased",
       "Explains that XOR is order-independent (like parity), so two swapped characters, or two errors that flip the same bit, give the same checksum and go undetected"
     ],
@@ -69,12 +72,12 @@
   },
   "hints": {
     "challenge": [
-      "xor_checksum is a running total, like a sum, but with ^ instead of +. What starting value leaves the first character unchanged? For checksum_ok: which characters belong to the body, and what should you check BEFORE you start slicing?",
+      "xor_checksum is a running total, like a sum, but with ^ instead of +. What starting value leaves the first character unchanged? For checksum_ok: which characters belong to the body (see the checksum rule shown with the challenge), and what should you check BEFORE you start slicing?",
       "xor_checksum: start at 0, XOR in ord() of each character with a for loop, then format with \"02X\". checksum_ok: strip the line; find the '*'; if the line doesn't start with '$' or find returned -1, return False. Otherwise XOR the characters from index 1 up to (not including) the star, and compare the 2-digit result to the text after the star, uppercased.",
       "xor_checksum: total = 0; for each character ch in body: total = total XOR ord(ch); return total formatted as 2 uppercase hex digits. checksum_ok: line = strip(sentence); star = position of '*' (or -1); if line doesn't start with '$' or star is -1: return False; total = 0; for i in range(1, star): total = total XOR ord(line[i]); return (total as 2 uppercase hex digits) == (line after the star, uppercased)."
     ],
     "bug": [
-      "Which characters is the NMEA checksum computed over? Which characters does this loop actually visit?",
+      "Read the checksum rule shown with the bug report: which characters should be XORed? Which characters does this loop actually visit?",
       "The loop runs over \"$\" + body, so the '$' (0x24) gets XORed in: 1F ^ 24 = 3B. Loop over the body only, and add the '$' when you build the output."
     ]
   }

@@ -80,6 +80,10 @@ if fields[7] != "":
     fix["satellites"] = int(fields[7])
 ```
 
+(Index 7 is the GGA satellite count. Field positions are reference material, not something to memorize; this lesson's examples and challenge use this table, and the challenge shows it again.)
+
+{{ref:gga}}
+
 Leaving a key **out** when its field is empty is honest: it says "the receiver didn't tell us," rather than inventing a 0 that looks like real data. (An altitude of 0.0 m is a real place, sea level! A missing altitude is not.) The caller can then choose a default with `.get`.
 
 ### 5. Looping over a dict
@@ -138,7 +142,9 @@ Read each example, **predict what it prints**, then run it.
 
 {{example:ex3}}
 
-**Example 4: dispatch with a dict of functions.** Each sentence type goes to its own handler; unknown types are ignored.
+**Example 4: dispatch with a dict of functions.** Each sentence type goes to its own handler; unknown types are ignored. The RMC handler reads the status letter at index 2 (`A` = valid, `V` = void); look it up in the RMC table rather than memorizing it:
+
+{{ref:rmc}}
 
 {{example:ex4}}
 

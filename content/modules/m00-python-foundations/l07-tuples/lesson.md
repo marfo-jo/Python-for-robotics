@@ -66,7 +66,11 @@ def position(sentence):
     return lat, lon            # the comma packs them into one tuple
 ```
 
-(`to_degrees` converts the NMEA `ddmm.mmmm` format to decimal degrees, with south and west negative. It's given to you in this lesson. You'll take it apart and derive it in lesson 0.9.)
+(`to_degrees` converts the NMEA `ddmm.mmmm` format to decimal degrees, with south and west negative. It's given to you in this lesson, and you don't need to understand that format yet: treat it as a black box that takes two text fields and returns a float. You'll take it apart and derive it in lesson 0.9.)
+
+Fields 2 to 5 are the latitude, its hemisphere letter, the longitude, and its hemisphere letter. As always, field positions are reference material, not something to memorize; here is the GGA table again (the challenge shows it too):
+
+{{ref:gga}}
 
 ### 5. Unpacking
 

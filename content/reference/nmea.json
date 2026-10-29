@@ -1,0 +1,147 @@
+{
+  "_about": "Protocol facts that Module 0 questions may need. Questions test Python skills, never memorized protocol details: any item that depends on one of these facts declares \"refs\": [\"<id>\"] and the site shows the table next to it. Embed in prose with {{ref:<id>}}.",
+  "anatomy": {
+    "title": "Anatomy of an NMEA sentence",
+    "example": "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47\\r\\n",
+    "columns": ["Part", "Example", "Meaning"],
+    "rows": [
+      ["Start", "$", "Every sentence starts with '$' (index 0)"],
+      ["Talker ID", "GP", "Characters 1 to 2: GP = GPS only, GN = multi-constellation, GL = GLONASS"],
+      ["Sentence type", "GGA", "Characters 3 to 5: GGA, RMC, GSA, VTG, GSV, ..."],
+      ["Fields", "123519,4807.038,...", "Comma-separated; empty fields are allowed (two commas touching)"],
+      ["Checksum marker", "*", "Separates the data from the checksum"],
+      ["Checksum", "47", "Two hex digits after '*'; may arrive in lowercase"],
+      ["End of line", "\\r\\n", "Carriage return + line feed (invisible) on lines read from a serial port or file"]
+    ]
+  },
+  "checksum": {
+    "title": "NMEA checksum rule",
+    "columns": ["Step", "Rule"],
+    "rows": [
+      ["1", "Take the characters strictly BETWEEN '$' and '*' (exclude both)"],
+      ["2", "XOR together the character codes (ord()) of all of them, starting from 0"],
+      ["3", "Write the result as two uppercase hex digits, zero-padded (3 → '03')"],
+      ["4", "Compare with the two digits after '*', ignoring upper/lower case"]
+    ]
+  },
+  "gga": {
+    "title": "$GPGGA fields (fix data) after split(\",\")",
+    "example": "$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*47",
+    "columns": ["Index", "Example", "Meaning"],
+    "rows": [
+      ["0", "$GPGGA", "Talker + sentence type"],
+      ["1", "123519", "UTC time, hhmmss or hhmmss.ss (12:35:19)"],
+      ["2", "4807.038", "Latitude, ddmm.mmmm (48° 07.038')"],
+      ["3", "N", "Latitude hemisphere: N or S"],
+      ["4", "01131.000", "Longitude, dddmm.mmmm (011° 31.000')"],
+      ["5", "E", "Longitude hemisphere: E or W"],
+      ["6", "1", "Fix quality (see the fix quality table): 0 = no fix"],
+      ["7", "08", "Number of satellites used"],
+      ["8", "0.9", "HDOP, horizontal dilution of precision (lower is better)"],
+      ["9", "545.4", "Altitude above mean sea level"],
+      ["10", "M", "Altitude units (M = meters)"],
+      ["11", "46.9", "Geoid separation"],
+      ["12", "M", "Geoid separation units"],
+      ["13", "", "Age of DGPS correction, seconds (often empty)"],
+      ["14", "*47", "DGPS station ID (often empty), then '*' and the checksum"]
+    ],
+    "notes": ["A no-fix sentence keeps all 15 positions; the empty ones are ''.", "The checksum is glued to the last field, so the last item of split(',') contains '*'."]
+  },
+  "rmc": {
+    "title": "$GPRMC / $GNRMC fields (recommended minimum) after split(\",\")",
+    "example": "$GNRMC,220516,A,4221.123,N,07105.456,W,0.13,309.62,281026,,,A*7C",
+    "columns": ["Index", "Example", "Meaning"],
+    "rows": [
+      ["0", "$GNRMC", "Talker + sentence type"],
+      ["1", "220516", "UTC time, hhmmss or hhmmss.ss"],
+      ["2", "A", "Status: A = valid (active), V = void (no valid fix)"],
+      ["3", "4221.123", "Latitude, ddmm.mmmm"],
+      ["4", "N", "Latitude hemisphere: N or S"],
+      ["5", "07105.456", "Longitude, dddmm.mmmm"],
+      ["6", "W", "Longitude hemisphere: E or W"],
+      ["7", "0.13", "Speed over ground, knots"],
+      ["8", "309.62", "Course over ground, degrees from true north"],
+      ["9", "281026", "UTC date, ddmmyy (28 Oct 2026)"],
+      ["10", "", "Magnetic variation, degrees (often empty)"],
+      ["11", "", "Magnetic variation direction, E or W (often empty)"],
+      ["12", "A*7C", "Mode indicator (A = autonomous, D = differential, N = not valid), then '*' and the checksum"]
+    ]
+  },
+  "gsa": {
+    "title": "$GPGSA / $GNGSA fields (satellites and DOP) after split(\",\")",
+    "example": "$GPGSA,A,3,03,04,06,13,17,19,24,28,,,,,1.8,1.0,1.5*3F",
+    "columns": ["Index", "Example", "Meaning"],
+    "rows": [
+      ["0", "$GPGSA", "Talker + sentence type"],
+      ["1", "A", "Mode: A = automatic 2D/3D, M = manual"],
+      ["2", "3", "Fix type: 1 = no fix, 2 = 2D, 3 = 3D"],
+      ["3 to 14", "03, 04, ...", "IDs of satellites used (12 slots, unused ones empty)"],
+      ["15", "1.8", "PDOP (position dilution of precision)"],
+      ["16", "1.0", "HDOP (horizontal)"],
+      ["17", "1.5*3F", "VDOP (vertical), then '*' and the checksum"]
+    ]
+  },
+  "vtg": {
+    "title": "$GPVTG fields (course and speed) after split(\",\")",
+    "example": "$GPVTG,309.62,T,,M,0.13,N,0.2,K,A*03",
+    "columns": ["Index", "Example", "Meaning"],
+    "rows": [
+      ["0", "$GPVTG", "Talker + sentence type"],
+      ["1", "309.62", "Course, degrees true"],
+      ["2", "T", "'T' = true"],
+      ["3", "", "Course, degrees magnetic (often empty)"],
+      ["4", "M", "'M' = magnetic"],
+      ["5", "0.13", "Speed, knots"],
+      ["6", "N", "'N' = knots"],
+      ["7", "0.2", "Speed, km/h"],
+      ["8", "K", "'K' = km/h"],
+      ["9", "A*03", "Mode indicator, then '*' and the checksum"]
+    ]
+  },
+  "gsv": {
+    "title": "$GPGSV fields (satellites in view) after split(\",\")",
+    "example": "$GPGSV,3,1,11,03,03,111,00,04,15,270,00,06,01,010,00,13,06,292,00*74",
+    "columns": ["Index", "Example", "Meaning"],
+    "rows": [
+      ["0", "$GPGSV", "Talker + sentence type"],
+      ["1", "3", "Total number of GSV messages in this group"],
+      ["2", "1", "This message's number"],
+      ["3", "11", "Satellites in view"],
+      ["4 to 7", "03,03,111,00", "Satellite ID, elevation (°), azimuth (°), signal-to-noise (dB); repeats up to 4 times"]
+    ]
+  },
+  "fixquality": {
+    "title": "GGA fix quality codes (field 6)",
+    "columns": ["Code", "Meaning"],
+    "rows": [
+      ["0", "No fix (position fields are empty or invalid)"],
+      ["1", "GPS fix (standalone)"],
+      ["2", "DGPS fix (differential corrections)"],
+      ["3", "PPS fix (precise positioning service)"],
+      ["4", "RTK fixed (centimeter-level)"],
+      ["5", "RTK float (decimeter-level)"],
+      ["6", "Dead reckoning (estimated)"],
+      ["7", "Manual input mode"],
+      ["8", "Simulation mode"]
+    ]
+  },
+  "ddmm": {
+    "title": "Latitude/longitude format and sign",
+    "columns": ["Field", "Format", "Example", "Decimal degrees"],
+    "rows": [
+      ["Latitude", "ddmm.mmmm (2 degree digits, then minutes)", "4807.038, N", "48 + 07.038 / 60 = 48.117300"],
+      ["Longitude", "dddmm.mmmm (3 degree digits, then minutes)", "07105.456, W", "−(71 + 05.456 / 60) = −71.090933"],
+      ["Sign", "S and W are negative; N and E are positive", "", ""],
+      ["Minutes", "There are 60 minutes in a degree", "", ""]
+    ]
+  },
+  "utctime": {
+    "title": "UTC time field format",
+    "columns": ["Format", "Example", "Meaning"],
+    "rows": [
+      ["hhmmss", "123519", "12 h 35 min 19 s"],
+      ["hhmmss.ss", "140003.50", "14 h 00 min 03.50 s"],
+      ["Seconds since midnight", "", "hh × 3600 + mm × 60 + ss"]
+    ]
+  }
+}

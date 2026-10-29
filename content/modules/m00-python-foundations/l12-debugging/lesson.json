@@ -39,7 +39,7 @@
   "predict": [
     {
       "id": "p1",
-      "question": "The satellites field from split() and the number you expected. What does this print?",
+      "question": "x is a satellite count read from split(), so it's a string; y is the number you expected. What does this print?",
       "code": "x = \"8\"\ny = 8\nprint(x, y)\nprint(x == y)",
       "choices": [
         "8 8\nTrue",
@@ -48,7 +48,8 @@
         "TypeError"
       ],
       "answer": 1,
-      "why": "print() shows the string '8' and the int 8 exactly the same way, without quotes, so the output can't tell you they differ. But a str is never equal to an int, so the comparison is False (comparing with == never raises; it just says False). This is why debugging prints should use repr(x) or f\"{x=}\", which would show '8' with quotes."
+      "why": "print() shows the string '8' and the int 8 exactly the same way, without quotes, so the output can't tell you they differ. But a str is never equal to an int, so the comparison is False (comparing with == never raises; it just says False). This is why debugging prints should use repr(x) or f\"{x=}\", which would show '8' with quotes.",
+      "selfContained": true
     },
     {
       "id": "p2",
@@ -88,21 +89,30 @@
       "notice": "Step into has_fix, then into fix_quality: the call stack grows to <module> → has_fix → fix_quality. fix_quality returns '1' WITH quotes in the variables table: it's a string. print() showed it as 1, which looked fine. In has_fix, '1' == 1 is False and '1' == 2 is False, so it returns False. The fault is detected in has_fix, but the cause is the missing int() conversion.",
       "predictFirst": {
         "question": "The sentence has fix quality 1. What will the two print lines show? Then: in the variables table, what exactly will quality hold inside has_fix?",
-        "reveal": "It prints 1, then no fix. quality holds the STRING '1' (with quotes in the tracer), and a string is never equal to the int 1. print(fix_quality(s)) hid that, because print() doesn't show quotes. Fix: convert with int() (or compare with '1' and '2')."
+        "reveal": "It prints 1, then no fix. quality holds the STRING '1' (with quotes in the tracer), and a string is never equal to the int 1. print(fix_quality(s)) hid that, because print() doesn't show quotes. Fix: convert with int() (or compare with '1' and '2').",
+        "selfContained": true
       }
     }
   ],
   "challenge": {
-    "task": "A 4-stage GPS track-length pipeline (gga_fixes → parse_latlon → to_local_xy → path_length, joined by track_length) has three planted bugs in three different stages (stage 1, stage 3, stage 4): a type mismatch, a units mistake, and an off-by-one. The learner must find and fix all three using the debugging method, without rewriting the design. Don't name the bugs; guide them to probe and compare expected vs actual.",
+    "task": "A 4-stage GPS track-length pipeline (gga_fixes → parse_latlon → to_local_xy → path_length, joined by track_length) has three planted bugs in three different stages (stage 1, stage 3, stage 4): a type mismatch, a units mistake, and an off-by-one. The learner is given the stage 3 formula: x = radians(lon − lon0) · R · cos(lat0), y = radians(lat − lat0) · R, with R = 6,371,000 m, where math.cos expects radians (so lat0 must be converted with math.radians first); stage 4 sums sqrt(Δx² + Δy²) over consecutive points. Field layout, fix-quality codes, and the ddmm format are shown in the reference tables. The learner must find and fix all three using the debugging method, without rewriting the design. Don't name the bugs; guide them to probe and compare expected vs actual.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "gga",
+      "fixquality",
+      "ddmm"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "wrong dt (hhmmss timestamp treated as a plain number)",
-    "report": "Lab 4 speed comparison: \"GPS speed matches wheel odometry (about 1.5 m/s) almost all the time. But once a minute, exactly when the seconds roll over from :59 to :00, the GPS speed drops to about 0.04 m/s for one sample, then recovers. Odometry shows no slowdown. It happens on every log, at the start of every minute.\" Find the bug and fix it."
+    "report": "Lab 4 speed comparison: \"GPS speed matches wheel odometry (about 1.5 m/s) almost all the time. But once a minute, exactly when the seconds roll over from :59 to :00, the GPS speed drops to about 0.04 m/s for one sample, then recovers. Odometry shows no slowdown. It happens on every log, at the start of every minute.\" Find the bug and fix it.",
+    "refs": [
+      "utctime"
+    ]
   },
   "explainBack": {
     "prompt": "In your own words: describe how you found the three bugs in the track pipeline, step by step. Which measurement (a failing test name, a probe, a trace) pointed you at each stage? What did you expect versus what you saw? How does this compare with how you would troubleshoot a fault on a PLC-controlled machine?",

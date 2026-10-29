@@ -87,6 +87,10 @@ with open(path, encoding="utf-8") as f:
 
 Notice which test catches what. A blank line becomes `''` after stripping. Junk like a boot banner has no `$` and no `*`. A truncated last line starts with `$` but has no `*`. A corrupted sentence has everything, but the checksum doesn't match. A single `checksum_ok()` check (lesson 0.4) rejects all three non-blank kinds. The `$`-and-`*` shape check alone is **not** enough, because corrupted sentences pass it.
 
+Here is the checksum rule again, as a reference (you don't need to memorize it; it's shown next to the challenge too):
+
+{{ref:checksum}}
+
 ## Paths and the working directory
 
 A **path** tells `open()` where the file is.

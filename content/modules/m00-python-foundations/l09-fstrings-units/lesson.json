@@ -44,7 +44,7 @@
   "predict": [
     {
       "id": "p1",
-      "question": "The latitude field is the text '4807.038'. What happens?",
+      "question": "A field arrives as the text '4807.038' (it has a decimal point). What happens?",
       "code": "lat_text = \"4807.038\"\nprint(int(lat_text))",
       "choices": [
         "4807",
@@ -53,7 +53,8 @@
         "ValueError"
       ],
       "answer": 3,
-      "why": "int() on a STRING only accepts text that is a whole number. '4807.038' has a decimal point, so int() raises ValueError: invalid literal for int(). int() only chops decimals when you give it a float: int(float(lat_text)) is 4807. That's two different jobs: parsing text, and truncating a number."
+      "why": "int() on a STRING only accepts text that is a whole number. '4807.038' has a decimal point, so int() raises ValueError: invalid literal for int(). int() only chops decimals when you give it a float: int(float(lat_text)) is 4807. That's two different jobs: parsing text, and truncating a number.",
+      "selfContained": true
     },
     {
       "id": "p2",
@@ -66,7 +67,10 @@
         "42.5\n42.3"
       ],
       "answer": 2,
-      "why": "The field means 42 degrees and 30 MINUTES. Thirty minutes is half a degree, so the right answer is 42.5. Dividing the whole field by 100 treats the minutes as hundredths of a degree and gives 42.3, which is 0.2° (about 22 km) too far south. Both lines run without error, which is exactly why this bug survives."
+      "why": "The field means 42 degrees and 30 MINUTES. Thirty minutes is half a degree, so the right answer is 42.5. Dividing the whole field by 100 treats the minutes as hundredths of a degree and gives 42.3, which is 0.2° (about 22 km) too far south. Both lines run without error, which is exactly why this bug survives.",
+      "refs": [
+        "ddmm"
+      ]
     },
     {
       "id": "p3",
@@ -110,20 +114,26 @@
     "task": "Write nmea_to_decimal(value, hemisphere) that converts NMEA ddmm.mmmm or dddmm.mmmm text to signed decimal degrees (S and W negative, None for empty fields), and format_position(lat, lon) that returns a label like '42.333502°N, 71.094333°W' with exactly 6 decimals.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "ddmm"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "unit mix-up (minutes treated as hundredths of a degree)",
-    "report": "Lab 4 dead-reckoning report: \"We plotted the GPS track on top of the wheel-odometry track. The shape matches, but the whole GPS track sits about 16 km south of where we drove, and the offset changes as we move. West longitudes do come out negative, so the hemisphere handling seems fine.\" gga_to_latlon is supposed to return (lat, lon) in signed decimal degrees. Find the bug and fix it."
+    "report": "Lab 4 dead-reckoning report: \"We plotted the GPS track on top of the wheel-odometry track. The shape matches, but the whole GPS track sits about 16 km south of where we drove, and the offset changes as we move. West longitudes do come out negative, so the hemisphere handling seems fine.\" gga_to_latlon is supposed to return (lat, lon) in signed decimal degrees. Find the bug and fix it.",
+    "refs": [
+      "ddmm"
+    ]
   },
   "explainBack": {
-    "prompt": "In your own words: what do the parts of an NMEA latitude like 4220.0101 mean, how do you turn it into signed decimal degrees, and why is dividing the whole field by 100 wrong even though it gives a believable number? Also explain why we print positions with 6 decimal places.",
+    "prompt": "Facts you can use (no need to memorize them): an NMEA latitude like 4220.0101 is 42 degrees followed by 20.0101 minutes, there are 60 minutes in a degree, S and W are negative, and 1° of latitude is about 111 km. In your own words: how does your code split 4220.0101 into degrees and minutes and turn it into signed decimal degrees? Why is dividing the whole field by 100 a bug that never raises an error? And what is the difference between round(x, 6) and f\"{x:.6f}\", and why print 6 decimals?",
     "rubric": [
-      "Explains that the field is degrees followed by minutes (2 digits before the decimal point plus the fraction), with 60 minutes per degree, so the minutes must be divided by 60",
-      "Explains that the sign comes from the hemisphere letter (S and W negative) and that dividing by 100 treats minutes as hundredths, an error of up to about 0.4° (tens of km) that never crashes",
-      "Explains that 1° of latitude is about 111 km, so the 6th decimal place is about 0.1 m, and that formatting (f\"{x:.6f}\") changes the display while round() changes the value"
+      "Explains the Python steps: find the split point (2 characters before the '.'), int() the degrees part, float() the minutes part, and add minutes / 60",
+      "Explains that the sign comes from an if on the hemisphere letter, and that dividing by 100 treats minutes as hundredths: a unit mix-up that still yields a believable float, so Python has nothing to complain about",
+      "Explains that f\"{x:.6f}\" only changes the display (always 6 decimals) while round() changes the value, and that with 1° about 111 km the 6th decimal is about 0.1 m"
     ],
     "minWords": 50
   },

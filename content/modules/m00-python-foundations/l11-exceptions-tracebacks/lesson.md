@@ -41,6 +41,12 @@ print(parse_lat("$GPGGA,123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,*
 print(parse_lat("$GPGGA,,,,,,0,00,,,M,,M,,*66"))
 ```
 
+(`fields[2]` is the GGA latitude, in ddmm.mmmm format. The tables are below for reference; reading the traceback doesn't depend on them.)
+
+{{ref:gga}}
+
+{{ref:ddmm}}
+
 It prints `48.1173`, then the site shows this:
 
 ```
@@ -219,7 +225,7 @@ And here is the normal flow of `try` / `except` / `else` / `finally` over three 
 
 Write two functions.
 
-`parse_gga(sentence)` strips the sentence, checks it, and returns a dict `{"time": str, "quality": int, "sats": int, "hdop": float, "alt": float}` from fields 1, 6, 7, 8, and 9. For bad input it must **raise `ValueError`** with your own message, checked in this order:
+`parse_gga(sentence)` strips the sentence, checks it, and returns a dict `{"time": str, "quality": int, "sats": int, "hdop": float, "alt": float}` from fields 1, 6, 7, 8, and 9 (time, fix quality, satellites, HDOP, altitude: look them up in the GGA field table shown with the challenge; the checksum rule and sentence anatomy tables are there too). For bad input it must **raise `ValueError`** with your own message, checked in this order:
 
 | Problem | Message |
 |---|---|

@@ -10,7 +10,15 @@ import { VIZ } from "../viz/index.js";
 import { renderExercise, renderOutput } from "./exercise.js";
 import { openTutor } from "./tutor-panel.js";
 import { tutorAvailable } from "../tutor/tutor.js";
+import { refBlock } from "./reference.js";
 import * as store from "../store.js";
+
+// Reference tables an item declares ("refs": [...]) appear right next to it.
+function refsFor(item) {
+  const host = h("div", {});
+  refBlock(item?.refs).then((block) => block && host.append(block));
+  return host;
+}
 
 export async function renderLesson(root, curriculum, moduleId, lessonId) {
   const lesson = await loadLesson(moduleId, lessonId);
@@ -51,6 +59,7 @@ export async function renderLesson(root, curriculum, moduleId, lessonId) {
       else if (kind === "challenge") await embedChallenge(slot, lesson, rec, tutorCtx, refresh);
       else if (kind === "bug") await embedBug(slot, lesson, rec, tutorCtx, refresh);
       else if (kind === "explain") await embedExplain(slot, lesson, rec, refresh);
+      else if (kind === "ref") slot.append(await refBlock([id]));
       else slot.append(h("div", { class: "alert bad" }, `Unknown embed ${kind}`));
     } catch (err) {
       slot.append(h("div", { class: "alert bad" }, `Could not load ${kind}:${id}: ${err.message}`));
@@ -119,7 +128,7 @@ function embedPredict(slot, lesson, id, refresh) {
   }
   slot.append(h("div", { class: "predict" },
     h("div", { class: "example-title" }, "Predict the output"),
-    p.question ? h("p", {}, p.question) : null, host, choices, lockBtn, result));
+    p.question ? h("p", {}, p.question) : null, refsFor(p), host, choices, lockBtn, result));
   createEditor(host, { value: p.code.trimEnd(), readOnly: true, minLines: 1 });
   if (rec.predict[p.id] !== undefined) reveal(null);
 }
@@ -135,7 +144,7 @@ function embedViz(slot, lesson, id) {
     const pf = v.predictFirst;
     const answer = h("textarea", { rows: 2, placeholder: "Write your prediction before you touch the visual…", "aria-label": "Your prediction" });
     const gate = h("div", { class: "predict-first" },
-      h("p", {}, h("strong", {}, "Predict first: "), pf.question), answer,
+      h("p", {}, h("strong", {}, "Predict first: "), pf.question), refsFor(pf), answer,
       button("I've predicted, show the visual", () => {
         if (answer.value.trim().length < 3) return toast("Write a prediction first, even a guess.");
         gate.replaceWith(h("div", { class: "alert info" }, h("strong", {}, "Your prediction: "), answer.value,
@@ -156,6 +165,7 @@ function embedViz(slot, lesson, id) {
 async function embedChallenge(slot, lesson, rec, tutorCtx, refresh) {
   const ch = lesson.challenge;
   const [starter, tests] = await Promise.all([loadText(`${lesson.base}/${ch.starter}`), loadText(`${lesson.base}/${ch.tests}`)]);
+  slot.append(refsFor(ch));
   if (rec.challengePassed) slot.append(h("div", { class: "alert ok" }, "✓ Challenge passed. You can keep experimenting."));
   renderExercise(slot, {
     starter, tests, testName: "test_challenge.py",
@@ -178,7 +188,7 @@ async function embedChallenge(slot, lesson, rec, tutorCtx, refresh) {
 async function embedBug(slot, lesson, rec, tutorCtx, refresh) {
   const bug = lesson.bug;
   const [buggy, tests] = await Promise.all([loadText(`${lesson.base}/${bug.file}`), loadText(`${lesson.base}/${bug.tests}`)]);
-  slot.append(h("div", { class: "bug-report" }, h("strong", {}, "🐞 Bug report: "), bug.report));
+  slot.append(h("div", { class: "bug-report" }, h("strong", {}, "🐞 Bug report: "), bug.report), refsFor(bug));
   if (rec.bugFixed) slot.append(h("div", { class: "alert ok" }, "✓ Bug fixed."));
   renderExercise(slot, {
     starter: buggy, tests, testName: "test_bug.py",
@@ -234,7 +244,7 @@ async function embedExplain(slot, lesson, rec, refresh) {
   }
   slot.append(h("div", { class: "explain-back" },
     h("div", { class: "example-title" }, "Explain it back"),
-    h("p", {}, ex.prompt), text, count, actions, status));
+    h("p", {}, ex.prompt), refsFor(ex), text, count, actions, status));
   if (rec.explainDone) status.append(h("div", { class: "alert ok" }, "✓ Explanation accepted."));
 }
 

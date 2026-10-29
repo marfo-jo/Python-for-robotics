@@ -231,6 +231,15 @@ pre.test-msg { margin: 4px 0 4px 1.5em; font-size: 13px; white-space: pre-wrap; 
 .bridge pre { font-size: 13px; }
 .this-week ul { margin: 4px 0; }
 
+/* ---------- protocol reference tables ---------- */
+.refs { margin: 8px 0; }
+details.ref { background: var(--info-bg); border-radius: 8px; padding: 6px 12px; margin: 6px 0; }
+details.ref summary { cursor: pointer; font-weight: 600; }
+.ref-example { font-size: 14px; margin: 6px 0; overflow-x: auto; }
+.ref-table { width: 100%; font-size: 14px; margin: 6px 0; background: var(--surface); }
+.ref-table th, .ref-table td { border: 1px solid var(--border); padding: 3px 8px; text-align: left; vertical-align: top; }
+.ref-notes { font-size: 14px; margin: 4px 0; }
+
 /* ---------- CodeMirror theming ---------- */
 .CodeMirror { height: auto; border: 1px solid var(--border); border-radius: 8px; font-family: var(--mono); font-size: 14px;
   background: var(--code-bg); color: var(--text); }

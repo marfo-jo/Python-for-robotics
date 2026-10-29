@@ -95,7 +95,10 @@
       "notice": "Watch the call stack: <module> → parse_lat → to_degrees. On the second call, text is '' (the empty latitude field), and int('') raises ValueError. The traceback lists exactly the frames that were on the call stack at that moment, oldest at the top, newest at the bottom.",
       "predictFirst": {
         "question": "The first call works. On the second call (a no-fix sentence), which function will be running when it fails, what will the call stack be, and what is the error type?",
-        "reveal": "It fails inside to_degrees, at line 2, with the stack <module> → parse_lat → to_degrees. fields[2] is '' for a no-fix sentence, so int('') raises ValueError. The traceback's last solution.py line is line 2, but the real decision (what to do with no fix) belongs in parse_lat or its caller."
+        "reveal": "It fails inside to_degrees, at line 2, with the stack <module> → parse_lat → to_degrees. fields[2] is '' for a no-fix sentence, so int('') raises ValueError. The traceback's last solution.py line is line 2, but the real decision (what to do with no fix) belongs in parse_lat or its caller.",
+        "refs": [
+          "gga"
+        ]
       }
     },
     {
@@ -109,16 +112,24 @@
     }
   ],
   "challenge": {
-    "task": "Write parse_gga(sentence) that returns {'time','quality','sats','hdop','alt'} for a valid GGA sentence and raises ValueError with specific messages ('not an NMEA sentence', 'checksum mismatch', 'not a GGA sentence', 'too few fields', 'no fix') for bad input; and parse_fixes(lines) that returns (fixes, errors) with (line_number, message) for each bad line, skipping blanks and catching only ValueError.",
+    "task": "Write parse_gga(sentence) that returns {'time','quality','sats','hdop','alt'} (GGA fields 1, 6, 7, 8, 9; see the GGA field table) for a valid GGA sentence and raises ValueError with specific messages ('not an NMEA sentence', 'checksum mismatch', 'not a GGA sentence', 'too few fields', 'no fix') for bad input; and parse_fixes(lines) that returns (fixes, errors) with (line_number, message) for each bad line, skipping blanks and catching only ValueError.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": [
+      "gga",
+      "checksum",
+      "anatomy"
+    ]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "state changed inside try before the failing line (count includes rejected lines)",
-    "report": "Lab 4 data-quality table: \"mean_satellites says our logs average 6.3 satellites, but every single GGA fix in the file shows 9 or 10. The logs also contain the receiver's boot banner and some no-fix sentences, which are supposed to be ignored.\" Find the bug and fix it."
+    "report": "Lab 4 data-quality table: \"mean_satellites says our logs average 6.3 satellites, but every single GGA fix in the file shows 9 or 10. The logs also contain the receiver's boot banner and some no-fix sentences, which are supposed to be ignored.\" The satellite count is GGA field 7 (see the GGA field table). Find the bug and fix it.",
+    "refs": [
+      "gga"
+    ]
   },
   "explainBack": {
     "prompt": "In your own words: how do you read a Python traceback, and in what order? Then explain how your parse_gga and parse_fixes handle bad input: why parse_gga raises instead of returning None, why it turns an IndexError into a ValueError, and why parse_fixes catches only ValueError instead of using a bare except.",

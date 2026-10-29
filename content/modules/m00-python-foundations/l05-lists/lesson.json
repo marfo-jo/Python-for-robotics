@@ -108,16 +108,18 @@
     }
   ],
   "challenge": {
-    "task": "Write satellite_counts(sentences), which returns a list of int satellite counts from the GGA sentences in a list of NMEA lines (skipping other types, cut-off lines, and empty satellite fields), and last_n(readings, n), which returns a new list with the newest n readings without changing the input.",
+    "task": "Write satellite_counts(sentences), which returns a list of int satellite counts from the GGA sentences in a list of NMEA lines (skipping other types, cut-off lines, and empty satellite fields), and last_n(readings, n), which returns a new list with the newest n readings without changing the input. The GGA field table is shown here: look up the satellites field there.",
     "starter": "challenge/starter.py",
     "tests": "challenge/test_challenge.py",
-    "timeLimitMs": 8000
+    "timeLimitMs": 8000,
+    "refs": ["gga"]
   },
   "bug": {
     "file": "bug/buggy.py",
     "tests": "bug/test_bug.py",
     "bugType": "list aliasing (a buffer changed through a second name)",
-    "report": "Post-run report from the field team: \"The altitude plot looks great, but the saved raw log is wrong. The 87.4 m multipath spike we saw live is missing from the raw data. It shows 20.0 m, the plot ceiling.\" clamped() is supposed to return a clamped copy for plotting and leave the raw log untouched. Find the bug and fix it."
+    "report": "Post-run report from the field team: \"The altitude plot looks great, but the saved raw log is wrong. The 87.4 m multipath spike we saw live is missing from the raw data. It shows 20.0 m, the plot ceiling.\" clamped() is supposed to return a clamped copy for plotting and leave the raw log untouched. Find the bug and fix it.",
+    "refs": []
   },
   "explainBack": {
     "prompt": "In your own words: why did result = altitudes let clamped() damage the raw log, and how does altitudes[:] fix it? And why must satellite_counts check the length of the field list before reading fields[7]?",
@@ -130,7 +132,7 @@
   },
   "hints": {
     "challenge": [
-      "Two separate jobs. For satellite_counts: which index is the satellites field, and what must be true about the field list before you're allowed to read that index? For last_n: which slice gives the END of a list, and what number is -0?",
+      "Two separate jobs. For satellite_counts: which index is the satellites field (look it up in the GGA table shown with the challenge), and what must be true about the field list before you're allowed to read that index? For last_n: which slice gives the END of a list, and what number is -0?",
       "satellite_counts: start with an empty list, loop over the sentences, strip and split each one, and keep it only if it is a GGA sentence, its field list has MORE than 7 items, and field 7 isn't empty. Convert field 7 to a number before appending. last_n: a negative slice gives the newest n items and is always a new list, but n == 0 needs its own case, because -0 is just 0 and [0:] is the whole list.",
       "satellite_counts: counts = empty list; for each line in sentences: fields = split(strip(line), ','); if characters 3 to 6 of fields[0] are 'GGA' AND length of fields > 7 AND fields[7] is not empty: append int(fields[7]) to counts. return counts. last_n: if n is 0 or less: return an empty list; otherwise return readings sliced from -n to the end."
     ],

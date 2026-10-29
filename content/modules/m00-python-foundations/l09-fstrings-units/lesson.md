@@ -81,6 +81,10 @@ $$\text{decimal degrees} = \text{degrees} + \frac{\text{minutes}}{60}$$
 
 For `4220.0101`: 42 + 20.0101 / 60 = 42 + 0.333502 = **42.333502**.
 
+You don't have to memorize the format or the sign rule below. They're collected in this reference table, and the questions, challenge, and bug that need them show it next to them:
+
+{{ref:ddmm}}
+
 ### The sign comes from the hemisphere letter
 
 The number in the field is always positive. Direction lives in the **next** field:

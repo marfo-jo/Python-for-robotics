@@ -121,6 +121,34 @@ def actual_output(out, err):
     return f"{norm(out)}\n{etype}" if norm(out) else etype
 
 
+
+# --------------------------------------------------------------------- protocol-knowledge rule
+# Questions test Python skills, never memorized protocol details. Any item that
+# depends on an NMEA field layout or format must show the reference next to it
+# ("refs": [...], tables in content/reference/nmea.json) or state the needed
+# facts in its own text ("selfContained": true).
+
+REFS = json.loads((ROOT / "content" / "reference" / "nmea.json").read_text(encoding="utf-8"))
+PROTOCOL_WORDS = re.compile(
+    r"fix quality|quality field|satellite|hdop|altitude|latitude|longitude|hemisphere|"
+    r"status field|knots|course over|ddmm|dddmm|utc|fix type|geoid|talker|checksum", re.I)
+ASKS_LAYOUT = re.compile(r"\bindex\b|\bfield\b|which position|fields\[\d+\]|\[\d+\]", re.I)
+
+
+def check_refs(rep, scope, label, item, require_decision=False):
+    refs = item.get("refs")
+    if refs is not None:
+        unknown = [r for r in refs if r not in REFS]
+        rep.check(not unknown, scope, f"{label} refs exist {unknown or ''}")
+    if require_decision:
+        rep.check(refs is not None, scope, f"{label} declares refs (protocol facts it needs, or [])")
+        return
+    text = " ".join(str(item.get(k, "")) for k in ("q", "question", "code", "choices", "reveal"))
+    needs = PROTOCOL_WORDS.search(text) and ASKS_LAYOUT.search(text)
+    if needs:
+        ok = bool(refs) or item.get("selfContained") is True
+        rep.check(ok, scope, f"{label} asks about protocol fields: shows a reference or is selfContained")
+
 # --------------------------------------------------------------------- lessons
 
 REQUIRED = ["id", "title", "minutes", "objectives", "skills", "whereYouSawThis", "examples",
@@ -149,6 +177,9 @@ def verify_lesson(rep, module_dir, lesson_dir, lesson_id):
     rep.check(bool(wy.get("course")) and bool(wy.get("topic")), scope, "has 'Where you saw this'")
 
     embeds = {(k, i or "") for k, i in EMBED_RE.findall(md)}
+    for _, ref_id in [e for e in embeds if e[0] == "ref"]:
+        rep.check(ref_id in REFS, scope, f"lesson.md reference {{{{ref:{ref_id}}}}} exists")
+    embeds = {e for e in embeds if e[0] != "ref"}
     expected = ({("example", e["id"]) for e in meta["examples"]} |
                 {("predict", p["id"]) for p in meta["predict"]} |
                 {("viz", v["id"]) for v in meta["visualizations"]} |
@@ -168,6 +199,7 @@ def verify_lesson(rep, module_dir, lesson_dir, lesson_id):
                       f"example {ex['id']} output matches" + ("" if norm(out) == norm(exp) else f" (got {out!r})"))
 
     for p in meta["predict"]:
+        check_refs(rep, scope, f"predict {p['id']}", p)
         out, err = run_script(p["code"])
         actual = actual_output(out, err)
         choices = [norm(c) for c in p["choices"]]
@@ -178,12 +210,19 @@ def verify_lesson(rep, module_dir, lesson_dir, lesson_id):
         rep.check(len(set(choices)) == len(choices), scope, f"predict {p['id']} choices are distinct")
 
     for v in meta["visualizations"]:
+        if v.get("predictFirst"):
+            check_refs(rep, scope, f"viz {v['id']} predictFirst", v["predictFirst"])
         if v["component"] == "tracer":
             import pfr_harness  # noqa: PLC0415
             res = json.loads(pfr_harness.trace_user(v["props"]["code"]))
             ok = (res["error"] is None) or v["props"].get("expectError")
             rep.check(bool(ok) and res["steps"] and not res["truncated"], scope,
                       f"tracer {v['id']} runs to completion ({len(res['steps'])} steps{', TRUNCATED at the step cap' if res['truncated'] else ''})")
+
+    check_refs(rep, scope, "challenge", meta["challenge"], require_decision=True)
+    check_refs(rep, scope, "bug", meta["bug"], require_decision=True)
+    if meta["explainBack"].get("refs") is not None:
+        check_refs(rep, scope, "explain-back", meta["explainBack"])
 
     # Hidden tests
     ch = meta["challenge"]
@@ -246,6 +285,7 @@ def verify_quiz(rep, scope, path):
     for q in pool:
         good = 0 <= q["answer"] < len(q["choices"]) and len(set(q["choices"])) == len(q["choices"])
         rep.check(good, scope, f"quiz {q['id']} has a valid answer and distinct choices")
+        check_refs(rep, scope, f"quiz {q['id']}", q)
         if q.get("code") and q.get("checkOutput"):
             out, err = run_script(q["code"])
             actual = actual_output(out, err)
@@ -272,6 +312,7 @@ def verify_module(rep, entry, only_lesson=None):
         if not cfg:
             rep.fail(mid, f"module has no {name}")
             continue
+        check_refs(rep, f"{mid}.{name}", name, cfg, require_decision=True)
         extra = {dest: read(ROOT / src) for dest, src in cfg.get("dataFiles", {}).items()}
         verify_graded(rep, f"{mid}.{name}", module_dir, cfg, f"{mid}/{prefix}", test_name, extra)
     for key in ("robots", "cpp"):

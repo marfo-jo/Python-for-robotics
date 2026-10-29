@@ -79,6 +79,8 @@ async function checkUI() {
     ["#/", (d) => d.querySelector(".radar"), "dashboard renders with radar"],
     ["#/m/m00", (d) => d.querySelector(".lesson-list li"), "module page lists lessons"],
     ["#/l/m00/m00.l01", (d) => d.querySelectorAll(".CodeMirror").length >= 8 && d.querySelector(".mastery h2"), "lesson 0.1 renders all embeds"],
+    ["#/l/m00/m00.l01", (d) => d.querySelectorAll("details.ref").length >= 3 && [...d.querySelectorAll("details.ref summary")].some((s) => s.textContent.includes("$GPGGA fields")),
+      "lesson 0.1 shows the GGA reference table (prose, visual, bug)"],
     ["#/review", (d) => d.querySelector("main h1"), "review page renders"],
     ["#/sim", (d) => d.querySelector(".sim-canvas"), "simulator page renders"],
     ["#/settings", (d) => d.querySelector("main h1"), "settings page renders"],
@@ -103,6 +105,7 @@ async function checkUI() {
   }
   for (const [hash, ready, label] of [
     ["#/quiz/m00", (d) => d.querySelectorAll(".quiz fieldset").length === 15, "mastery quiz draws 15 questions"],
+    ["#/project/m00", (d) => d.querySelector(".lesson-body details.ref"), "project brief shows its reference tables"],
     ["#/project/m00", (d) => d.querySelector(".exercise"), "project page renders"],
     ["#/nohands/m00", (d) => d.querySelector(".timer"), "No Hands page renders"],
     ["#/m/m00", (d) => d.querySelector(".bridge-robots") && d.querySelector(".bridge-cpp"), "module page shows both Bridge boxes"],
