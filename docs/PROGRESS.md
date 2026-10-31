@@ -80,6 +80,15 @@ Learner-reported bug: a lesson 0.1 question asked for the index of the GGA fix-q
 
 Learner-reported bug: the code font (Cascadia Code) rendered `!=` as ≠, `<=` as ≤, and so on. Ligatures are now off (`font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0`) on every code surface: inline code, pre blocks, the tracer, and the CodeMirror editor lines, which `codemirror.css` had set to `contextual`. The UI self-test checks the computed style in both light and dark themes. The track-page image check now waits for images to load, which fixed an intermittent false failure.
 
+### UI fix (2026-10-31): predict-first shows the code
+
+Learner-reported bug: a "Predict first" gate hid the whole visual, including the traced code and the input sentence, so questions like "which branch runs?" couldn't be answered.
+
+- **Now:** the code (tracer) or the sentence (NMEA field explorer, XOR stepper; shown read-only) is always visible, with the prediction box right below it. Only the interactive part waits for the prediction: the step-through controls, variables, and output for the tracer, and the split table or XOR stepper for the NMEA visuals. Your prediction and the Check then appear in the same spot.
+- **How:** components are now `render(el, props, gate)`. They place the gate after their inputs and return `unlock()` (`app/viz/index.js` documents this). The rule is in CONTENT_GUIDE.md: a predict-first question must be answerable from the code or sentence alone.
+- **Audit:** all 13 predict-first visuals in Module 0 (11 tracers in 0.2 to 0.12, the field explorer in 0.1, and the XOR stepper in 0.4). Each one is answerable from the code or sentence now shown, so no content changes were needed. The 8 visuals without a gate already showed everything.
+- **Re-verified:** the UI self-test now checks every gated visual: inputs are visible before the gate, the interactive part is hidden, and it opens after you predict. 13/13 pass, the full UI self-test passes, and `verify.py` passes 672/672. Checked by hand in the browser on lesson 0.2.
+
 ### Not yet verified (needs the learner's VM or hardware)
 
 - [ ] C1/C2: run `bash local/c-embedded/check.sh` in the Ubuntu VM on the answer-key files. They pass the avr-gcc syntax check, but no output has been checked yet. Two outputs assume gcc 11 behavior: int16 wraparound and `__STDC_VERSION__ = 201112`.

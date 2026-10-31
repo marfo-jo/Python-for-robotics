@@ -140,26 +140,29 @@ function embedViz(slot, lesson, id) {
   const stage = h("div", { class: "viz-stage" });
   const wrap = h("figure", { class: "viz" }, v.title ? h("div", { class: "example-title" }, v.title) : null);
   const notice = v.notice ? h("figcaption", { class: "notice" }, h("strong", {}, "What to notice: "), v.notice) : null;
+  // predictFirst: the code and inputs are always visible (the question is about
+  // them). The component places the gate after its inputs and keeps only the
+  // interactive part (step-through, split table, XOR stepper) hidden.
+  let gate = null;
+  let unlock = () => {};
   if (v.predictFirst) {
     const pf = v.predictFirst;
-    const answer = h("textarea", { rows: 2, placeholder: "Write your prediction before you touch the visual…", "aria-label": "Your prediction" });
-    const gate = h("div", { class: "predict-first" },
+    const answer = h("textarea", { rows: 2, placeholder: "Write your prediction from the code above, then step through it…", "aria-label": "Your prediction" });
+    gate = h("div", { class: "predict-first" },
       h("p", {}, h("strong", {}, "Predict first: "), pf.question), refsFor(pf), answer,
       button("I've predicted, show the visual", () => {
         if (answer.value.trim().length < 3) return toast("Write a prediction first, even a guess.");
         gate.replaceWith(h("div", { class: "alert info" }, h("strong", {}, "Your prediction: "), answer.value,
           pf.reveal ? h("div", {}, h("strong", {}, "Check: "), pf.reveal) : null));
-        stage.hidden = false;
+        unlock();
         if (notice) notice.hidden = false;
       }, "btn primary"));
-    stage.hidden = true;
     if (notice) notice.hidden = true;
-    wrap.append(gate);
   }
   wrap.append(stage);
   if (notice) wrap.append(notice);
   slot.append(wrap);
-  render(stage, v.props || {});
+  unlock = render(stage, v.props || {}, gate) || unlock;
 }
 
 async function embedChallenge(slot, lesson, rec, tutorCtx, refresh) {

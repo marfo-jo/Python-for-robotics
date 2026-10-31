@@ -1,13 +1,15 @@
 // Interactive NMEA visuals for Module 0.
 //  - renderNmeaFields: edit a sentence and see split(',') and indexes live.
 //  - renderXorChecksum: step through the XOR checksum one character at a time.
+// With a predict-first gate, the sentence stays visible (read-only) and the
+// rest of the visual waits until the learner commits a prediction.
 import { h, clear, button } from "../ui.js";
 
 const GGA_FIELDS = ["sentence id", "UTC time hhmmss.ss", "latitude ddmm.mmmm", "N/S",
   "longitude dddmm.mmmm", "E/W", "fix quality (0 = none)", "satellites used", "HDOP",
   "altitude", "altitude units", "geoid separation", "units", "DGPS age", "DGPS station*checksum"];
 
-export function renderNmeaFields(el, { sentence, fieldNames = GGA_FIELDS }) {
+export function renderNmeaFields(el, { sentence, fieldNames = GGA_FIELDS }, gate = null) {
   const input = h("input", { type: "text", class: "mono wide", value: sentence, "aria-label": "NMEA sentence", spellcheck: "false" });
   const sliceStart = h("input", { type: "number", value: 0, min: -99, max: 99, class: "small", "aria-label": "slice start" });
   const sliceEnd = h("input", { type: "number", value: 6, min: -99, max: 99, class: "small", "aria-label": "slice end" });
@@ -37,14 +39,30 @@ export function renderNmeaFields(el, { sentence, fieldNames = GGA_FIELDS }) {
         h("td", { class: "muted" }, fieldNames[i] || "")))));
   }
   [input, sliceStart, sliceEnd].forEach((x) => x.addEventListener("input", update));
-  el.append(h("div", { class: "viz-nmea" },
-    h("label", {}, "Sentence (edit me): ", input),
+  const label = h("span", {}, "Sentence (edit me): ");
+  const rest = h("div", {},
     h("div", { class: "row" }, h("label", {}, "slice start ", sliceStart), h("label", {}, " end ", sliceEnd), sliceOut),
-    charRow, table));
+    charRow, table);
+  el.append(h("div", { class: "viz-nmea" }, h("label", {}, label, input), gate, rest));
   update();
+  return lockUntilPredicted(gate, input, label, rest, "Sentence: ");
 }
 
-export function renderXorChecksum(el, { sentence }) {
+// Shows the sentence read-only and hides `rest`; the returned function undoes it.
+function lockUntilPredicted(gate, input, label, rest, lockedLabel) {
+  if (!gate) return () => {};
+  const openLabel = label.textContent;
+  label.textContent = lockedLabel;
+  input.readOnly = true;
+  rest.hidden = true;
+  return () => {
+    label.textContent = openLabel;
+    input.readOnly = false;
+    rest.hidden = false;
+  };
+}
+
+export function renderXorChecksum(el, { sentence }, gate = null) {
   const input = h("input", { type: "text", class: "mono wide", value: sentence, "aria-label": "NMEA sentence", spellcheck: "false" });
   const body = h("div", {});
   let step = 0;
@@ -81,10 +99,12 @@ export function renderXorChecksum(el, { sentence }) {
   }
   slider.addEventListener("input", () => { step = Number(slider.value); update(); });
   input.addEventListener("input", update);
-  el.append(h("div", { class: "viz-xor" },
-    h("label", {}, "Sentence (try changing one character): ", input),
+  const label = h("span", {}, "Sentence (try changing one character): ");
+  const rest = h("div", {},
     h("div", { class: "row" }, button("◀", () => { step = Math.max(0, step - 1); update(); }),
       slider, button("▶", () => { step += 1; update(); }), button("All", () => { step = 1e9; update(); })),
-    body));
+    body);
+  el.append(h("div", { class: "viz-xor" }, h("label", {}, label, input), gate, rest));
   update();
+  return lockUntilPredicted(gate, input, label, rest, "Sentence: ");
 }

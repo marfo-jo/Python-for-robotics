@@ -113,6 +113,22 @@ async function checkUI() {
     const bad = [...doc.querySelectorAll(".alert.bad")].map((e) => e.textContent.trim()).join(" | ");
     const embedsEmpty = [...doc.querySelectorAll(".embed")].filter((e) => !e.children.length).length;
     log(Boolean(doc.querySelector(".mastery h2")) && !bad && !embedsEmpty, `UI ${id} renders (${doc.querySelectorAll(".CodeMirror").length} editors)${bad ? " :: " + bad : ""}${embedsEmpty ? ` :: ${embedsEmpty} empty embeds` : ""}`);
+    // Predict-first: the code or sentence shows before the prediction (the question
+    // is about it); only the interactive part is hidden, and it opens after predicting.
+    for (const fig of doc.querySelectorAll("figure.viz")) {
+      const gate = fig.querySelector(".predict-first");
+      if (!gate) continue;
+      const shown = (e) => e && e.getClientRects().length > 0;
+      const inputs = fig.querySelector(".tracer-code .CodeMirror, .viz-nmea input.wide, .viz-xor input.wide");
+      const before = Boolean(inputs) && shown(inputs) && Boolean(inputs.compareDocumentPosition(gate) & Node.DOCUMENT_POSITION_FOLLOWING);
+      const gated = () => [...fig.querySelectorAll(".tracer-stepper, .viz-nmea > div:last-child, .viz-xor > div:last-child")];
+      const hiddenBefore = gated().length === 1 && !shown(gated()[0]);
+      gate.querySelector("textarea").value = "my guess";
+      gate.querySelector("button").click();
+      const openAfter = gated().length === 1 && shown(gated()[0]) && !fig.querySelector(".predict-first");
+      log(before && hiddenBefore && openAfter,
+        `UI ${id} predict-first "${fig.querySelector(".example-title")?.textContent || "visual"}": inputs visible ${before}, interaction gated ${hiddenBefore}, opens after predicting ${openAfter}`);
+    }
   }
   for (const [hash, ready, label] of [
     ["#/quiz/m00", (d) => d.querySelectorAll(".quiz fieldset").length === 15, "mastery quiz draws 15 questions"],

@@ -1,10 +1,12 @@
 // Step-through code tracer: shows which line runs next, the variables at that
 // moment, and the output so far. Data comes from pfr_harness.trace_user.
+// With a predict-first gate, the code stays visible and only the step-through
+// (controls, note, panels) waits until the learner commits a prediction.
 import { h, clear, button } from "../ui.js";
 import { createEditor } from "../editor.js";
 import { traceCode } from "../runner/runner.js";
 
-export function renderTracer(el, { code, editable = false }) {
+export function renderTracer(el, { code, editable = false }, gate = null) {
   let steps = [];
   let index = 0;
   let timer = null;
@@ -88,19 +90,20 @@ export function renderTracer(el, { code, editable = false }) {
   }
 
   slider.addEventListener("input", () => show(Number(slider.value)));
-  el.append(
-    h("div", { class: "tracer" },
-      editorHost,
-      h("div", { class: "tracer-controls" },
-        button("▶ Trace it", load, "btn primary"),
-        button("⏮", () => show(0), "btn", { "aria-label": "First step" }),
-        button("◀ Back", () => show(index - 1), "btn"),
-        button("Step ▶", () => show(index + 1), "btn"),
-        button("Play", play, "btn"),
-        button("Pause", stop, "btn"),
-        slider, counter),
-      note,
-      h("div", { class: "tracer-panels" },
-        varsBox,
-        h("div", {}, h("div", { class: "panel-title" }, "Output so far"), outBox))));
+  const stepper = h("div", { class: "tracer-stepper" },
+    h("div", { class: "tracer-controls" },
+      button("▶ Trace it", load, "btn primary"),
+      button("⏮", () => show(0), "btn", { "aria-label": "First step" }),
+      button("◀ Back", () => show(index - 1), "btn"),
+      button("Step ▶", () => show(index + 1), "btn"),
+      button("Play", play, "btn"),
+      button("Pause", stop, "btn"),
+      slider, counter),
+    note,
+    h("div", { class: "tracer-panels" },
+      varsBox,
+      h("div", {}, h("div", { class: "panel-title" }, "Output so far"), outBox)));
+  if (gate) stepper.hidden = true;
+  el.append(h("div", { class: "tracer" }, editorHost, gate, stepper));
+  return () => { stepper.hidden = false; };
 }

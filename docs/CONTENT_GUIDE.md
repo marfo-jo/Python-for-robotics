@@ -124,7 +124,11 @@ because NMEA sentences start with `$`.
 - Skills axes: python, math, controls, estimation, planning, perception, learning,
   ros2, softeng. Module 0 lessons: `{"python": 3}` (add `"softeng": 1` for
   debugging/testing-flavored lessons).
-- `predictFirst` gates the visual behind a written prediction. Use it on at least one visual.
+- `predictFirst` gates the visual's interactive part behind a written prediction. Use it on
+  at least one visual. The code (tracer) or sentence (NMEA visuals) is always shown next
+  to the prediction box; only the step-through, split table, or XOR stepper is hidden.
+  So the question must be answerable by reading that code or sentence, never by
+  seeing the trace.
 - Visual components available now: `tracer` (props: `code`, optional `expectError: true`
   when the traced code is meant to raise), `nmea-fields` (props: `sentence`),
   `xor-checksum` (props: `sentence`). Every Module 0 lesson should have a tracer.
